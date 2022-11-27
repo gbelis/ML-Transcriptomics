@@ -3,10 +3,18 @@ using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics
 include("./utility.jl")
 include("./models.jl")
 
-train_df = DataFrame(CSV.File("train.csv.gz"))
 
-train_data, train_prediction = separate_data_prediction(train_df)
-train_df_clean = clean_data(train_data)
-coerce!(train_df_clean, :labels => Multiclass)
 
-#mach = machine(MultinomialClassifier(penalty = :none), select(df_no_zero, not(:)), df_no_zero.labels[1:100]) |> fit!
+train_df = DataFrame(CSV.File("/Users/guillaumebelissent/Docs/EPFL/BA5/ML/Project/train.csv.gz"))
+test_df = DataFrame(CSV.File("/Users/guillaumebelissent/Docs/EPFL/BA5/ML/Project/test.csv.gz"))
+
+x = clean_data(vcat(select(train_df, Not(:labels)), test_df))
+y = coerce!(train_df, :labels => Multiclass).labels
+x_train = x[1:5000,:]
+x_pred = x[5001:end,:]
+
+mach = machine(MultinomialClassifier(penalty = :none), x_train, y) |> fit!
+pred_train = predict_mode(mach, x_train)
+mean(pred_train  .== y)
+
+pred = predict_mode(mach, x_pred)
