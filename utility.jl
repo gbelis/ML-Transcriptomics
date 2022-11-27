@@ -16,5 +16,5 @@ end
 function kaggle_submit(df_prediction, title)
     prediction_kaggle = DataFrame(id = collect(1:length(df_prediction)))
     prediction_kaggle[!,:prediction] = df_prediction
-    CSV.write("./Submission/title.txt", prediction_kaggle)
+    CSV.write("./Submission/$(title).csv", prediction_kaggle)
 end
