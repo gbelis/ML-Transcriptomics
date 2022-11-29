@@ -1,33 +1,18 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels
-include("./utility.jl")
+include("./data_processing.jl")
 include("./models.jl")
-
-train_df = DataFrame(CSV.File("./data/train.csv.gz"))
-test_df = DataFrame(CSV.File("./data/test.csv.gz"))
+include("./data_analysis.jl")
 
 
-x_train = clean_data(select(train_df, Not(:labels)))
-x_test = clean_data(select(test_df, names(x_train)))
-x_train = select(train_df, names(x_test))
+train_df = load_data("./data/train.csv.gz")
+test_df = load_data("./data/test.csv.gz")
 
-y = coerce!(train_df, :labels => Multiclass).labels
+x_train,x_test,y = clean_data(train_df, test_df)
 
-"""
-mach = machine(MultinomialClassifier(penalty = :none), x_train, y) |> fit!
-pred_train = predict_mode(mach, x_train)
-mean(pred_train  .== y)
-pred = predict_mode(mach, x_test)
-kaggle_submit(pred, "MultinomialClassifier_27_11_v2")
-"""
+#mach1 = lasso_classifier(x_train[1:100,1:100], x_test[1:100,1:100], y[1:100], 0, 15, 1e-5, 5e-4)
 
+mach1= ridge_classifier(x_train[1:100,1:100], x_test[1:100,1:100], y[1:100], 0, 10, 1e-6, 1e+2)
+plot(mach1)
+confusion_matrix(predict_mode(mach1),y[1:100] )
 
-"""
-model = MultitargetKNNClassifier(output_type = ColumnTable)
-self_tuning_model = TunedModel(model = model, resampling = CV(nfolds = 5), tuning = Grid(),
-                    range = range(model, :K, values = 1:50), measure = MisclassificationRate)
-
-KNN_tuned = machine(self_tuning_model, x_train, y, scitype_check_level=0)
-fit!(KNN_tuned, verbosity = 0)
-
-"""
