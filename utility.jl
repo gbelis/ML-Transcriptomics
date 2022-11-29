@@ -19,7 +19,7 @@ function kaggle_submit(df_prediction, title)
     CSV.write("./Submission/$(title).csv", prediction_kaggle)
 end
 
-function clean()
+function clean(train_df, test_df)
     x_train = clear_const(select(train_df, Not(:labels)))
     x_test = clear_const(select(test_df, names(x_train)))
     x_train = select(train_df, names(x_test))
