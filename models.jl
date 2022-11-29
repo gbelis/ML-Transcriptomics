@@ -9,6 +9,7 @@ function multinom_class(x_train, x_test, y, pena)
     kaggle_submit(pred, "MultinomialClassifier_$(pena)_29_11")
 end
 
+
 function lasso_classifier(x_train, x_test, y, seed, goal, lower, upper)
     Random.seed!(seed)
     model = MultinomialClassifier(penalty = :l1)
@@ -73,3 +74,13 @@ end
     #m = machine(self_tuning_xgb, X, y)
     #fit!(m, rows=train)
     #fitted_params(m).best_model
+
+function multi_knn(x_train,y) #Trash
+    model = MultitargetKNNClassifier(output_type = ColumnTable)
+    self_tuning_model = TunedModel(model = model, resampling = CV(nfolds = 5), tuning = Grid(),
+                        range = range(model, :K, values = 1:50), measure = MisclassificationRate)
+    KNN_tuned = machine(self_tuning_model, x_train, y, scitype_check_level=0)
+    fit!(KNN_tuned, verbosity = 0)
+    
+end
+
