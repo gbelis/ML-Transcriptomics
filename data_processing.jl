@@ -22,6 +22,7 @@ function remove_constant_predictors(df)
         df_no_const {DataFrame} -- New DataFrame without constante columns/predictors
     """
     df_no_const = df[:,  std.(eachcol(df)) .!= 0]
+    #df_no_const = df[:,  std.(eachcol(df)) .> 0.1]
     return df_no_const
 end
 
@@ -103,7 +104,7 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
             x_train, x_test = norm(x_train, x_test)
         end    
 
-        CSV.write("./data/indexes3.csv",DataFrame(index=names(x_train)))
+        #CSV.write("./data/indexes3.csv",DataFrame(index=names(x_train)))
     end
     return x_train,x_test,y
 end
