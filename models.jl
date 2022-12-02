@@ -17,9 +17,9 @@ function fit_and_evaluate(training_data, validation_data, test_data,validation_t
         error {DataFrame} -- dataframe of training and test error
 
     """
-    mach = machine(MultinomialClassifier(penalty = :none), training_data, validation_data) |> fit!
+    mach = machine(MultinomialClassifier(penalty = :l2, lambda = 1e-4), training_data, validation_data) |> fit!
     return mach, DataFrame(training_error = sum(MLJ.predict(mach).== validation_data),
-    test_error = sum(MLJ.predict(mach, test_data).== validation_test))
+    test_error = sum(MLJ.predict(mach, test_data).== validation_test), errorate = mean(predict_mode(mach, test_data) .!= validation_test))
 end
 
 function data_split(data,y, idx_train, idx_test; shuffle =true)
@@ -51,7 +51,7 @@ function data_split(data,y, idx_train, idx_test; shuffle =true)
     test_valid = y[idxs[idx_test], 1])
     end
 
-function multinom_class(x_train, x_test, y; pena, lambda)
+function multinom_class(x_train, x_test, y; pena, lambda, title)
     """
         Multinomial Classification. Save the prediction in a csv file.
 
@@ -67,8 +67,8 @@ function multinom_class(x_train, x_test, y; pena, lambda)
     """
     #mach = machine(MultinomialClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
     mach = machine(LogisticClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
-    pred = predict_mode(mach, x_test)
-    kaggle_submit(pred, "MultinomialClassifier_$(pena)_30_11")
+    pred = predict_mode(mach, x_tests)
+    kaggle_submit(pred, "MultinomialClassifier_pca2_$(pena)_$(title)_30_11")
     return mach
 end
 
@@ -178,4 +178,3 @@ function multi_knn(x_train,y) #Trash
     fit!(KNN_tuned, verbosity = 0)
     
 end
-
