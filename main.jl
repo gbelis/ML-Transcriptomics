@@ -1,23 +1,28 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels, MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 include("./data_processing.jl")
-include("./models.jl")
 include("./data_analysis.jl")
-
+include("./models.jl")
 
 #Importing Data
 train_df = DataFrame(CSV.File("./data/train.csv.gz"))
 test_df = DataFrame(CSV.File("./data/test.csv.gz"))
 
-#Spliting, Normalizing data
-normalised = true
-y = coerce!(train_df, :labels => Multiclass).labels
-if normalised
-    x_train, x_test = clean(train_df, test_df)
-    x_train, x_test = norm(x_train, x_test)
-else
-    x_train, x_test = clean(train_df, test_df)
-end
+
+#Clean Data
+x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
+
+CSV.write("./data/x_train.csv.gz", x_train)
+CSV.write("./data/x_test.csv.gz", x_test)
+CSV.write("./data/y.csv.gz", y)
+
+
+data = pca(vcat(x_train,x_test),4500)
+data2 = pca(vcat(x_train,x_test),4780)
+
+CSV.write("./data/PCA_4500.csv.gz", data)
+CSV.write("./data/PCA_4780.csv.gz", data2)
+
 
 x_train, x_test = clean(train_df, test_df)
 x_train_preds, x_test_preds  = chose_predictors(x_train, x_test, 0.6)
@@ -31,8 +36,7 @@ pred = predict(m5, x_train_norm[4001:end,:])
 mean(pred.== y[4001:end])
 
 
-
-
+"""
 Random.seed!(0)
 xgb = XGBoostClassifier()
 mach = machine(TunedModel(model = xgb,
@@ -46,10 +50,5 @@ plot(mach)
 report(mach)
 pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "XGBoost_preds27_1_12_norm_v2")
-
-"""
-mach = machine(MultinomialClassifier(penalty = :none), x_train[1:4000,:], y[1:4000]) |> fit!
-pred_train = predict_mode(mach, x_train[4001:end,:])
-mean(pred_train.== y[4001:end])
 """
 
