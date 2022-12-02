@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
-using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels
+using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels, MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 include("./data_processing.jl")
 include("./models.jl")
 include("./data_analysis.jl")
@@ -19,27 +19,37 @@ else
     x_train, x_test = clean(train_df, test_df)
 end
 
+x_train, x_test = clean(train_df, test_df)
+x_train_preds, x_test_preds  = chose_predictors(x_train, x_test, 0.6)
+x_train_norm, x_test_norm = norm(x_train_preds, x_test_preds)
+
+m5 = machine(SVC(), x_train_norm[1:4000,:], y[1:4000]);
+fit!(m5, verbosity = 0);
+pred = predict(m5, x_train_norm[1:4000,:])
+mean(pred.== y[1:4000])
+pred = predict(m5, x_train_norm[4001:end,:])
+mean(pred.== y[4001:end])
 
 
-#mach1 = lasso_classifier(x_train[1:100,1:100], x_test[1:100,1:100], y[1:100], 0, 15, 1e-5, 5e-4)
 
-"""
-mach1= ridge_classifier(x_train[1:100,1:100], x_test[1:100,1:100], y[1:100], 0, 10, 1e-6, 1e+2)
-plot(mach1)
-confusion_matrix(predict_mode(mach1),y[1:100] )
-"""
 
-"""
-mach = machine(MultinomialClassifier(penalty = :none), x_train, y) |> fit!
-pred_train = predict_mode(mach, x_train)
-mean(pred_train  .== y)
+Random.seed!(0)
+xgb = XGBoostClassifier()
+mach = machine(TunedModel(model = xgb,
+                        resampling = CV(nfolds = 4),
+                        measure = MisclassificationRate(),
+                        tuning = Grid(goal = 4),
+                        range = [range(xgb, :num_round, lower = 50, upper = 500),
+                                    range(xgb, :max_depth, lower = 2, upper = 6)]),
+                x_train, y) |> fit!
+plot(mach)
+report(mach)
 pred = predict_mode(mach, x_test)
-kaggle_submit(pred, "MultinomialClassifier_29_11_norm_v2")
-"""
+kaggle_submit(pred, "XGBoost_preds27_1_12_norm_v2")
 
 """
-x_train = clean_data(select(train_df, Not(:labels)))
-x_test = clean_data(select(test_df, names(x_train)))
-x_train = select(train_df, names(x_test))
-
+mach = machine(MultinomialClassifier(penalty = :none), x_train[1:4000,:], y[1:4000]) |> fit!
+pred_train = predict_mode(mach, x_train[4001:end,:])
+mean(pred_train.== y[4001:end])
 """
+
