@@ -2,15 +2,94 @@ using Pkg
     Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics
 
+function fit_and_evaluate(training_data, validation_data, test_data,validation_test)
+    """
+        fit the data with a multinomailClassifier and evaluate it.
 
-function multinom_class(x_train, x_test, y, pena)
-    mach = machine(MultinomialClassifier(penalty = pena), x_train, y) |> fit!
+    Arguments:
+        training_data {DataFrame} -- training data
+        valididation_data {DataFrame} -- training labels
+        test_data {DataFrame} -- test data
+        validation_test {DataFrame} -- test label
+
+    Returns:
+        mach {machine} -- trained machine
+        error {DataFrame} -- dataframe of training and test error
+
+    """
+    mach = machine(MultinomialClassifier(penalty = :none), training_data, validation_data) |> fit!
+    return mach, DataFrame(training_error = sum(MLJ.predict(mach).== validation_data),
+    test_error = sum(MLJ.predict(mach, test_data).== validation_test))
+end
+
+function data_split(data,y, idx_train, idx_test; shuffle =true)
+    """
+        Split data between a train and test set
+
+    Arguments:
+        data {DataFrame} -- all the data to split
+        y {DataFrame} -- labels of the data
+        idx_train {UnitRange{Int64}} -- indexes of train data
+        idx_test {UnitRange{Int64}} -- indexes of test data
+        shuffle {boolean} -- if true shuffle the data
+
+    Returns:
+        train {DataFrame} -- training data
+        train_valid {DataFrame} -- training labels
+        test {DataFrame} -- test data
+        test_valid {DataFrame} -- test label
+
+    """
+    if shuffle
+        idxs = randperm(size(data, 1))
+    else
+        idxs= 1:size(data, 1)
+    end
+    return (train = data[idxs[idx_train], :],
+    train_valid = y[idxs[idx_train], 1],
+    test = data[idxs[idx_test], :],
+    test_valid = y[idxs[idx_test], 1])
+    end
+
+function multinom_class(x_train, x_test, y; pena, lambda)
+    """
+        Multinomial Classification. Save the prediction in a csv file.
+
+    Arguments:
+        x_train {DataFrame} -- train set (without labels)
+        x_test {DataFrame} -- test set to predict
+        y {DataFrame} -- labels of the training data
+        pena {} -- penalty
+
+    Returns:
+        mach{} -- machine
+
+    """
+    #mach = machine(MultinomialClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
+    mach = machine(LogisticClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
     pred = predict_mode(mach, x_test)
-    kaggle_submit(pred, "MultinomialClassifier_$(pena)_29_11")
+    kaggle_submit(pred, "MultinomialClassifier_$(pena)_30_11")
+    return mach
 end
 
 
-function lasso_classifier(x_train, x_test, y, seed, goal, lower, upper)
+function lasso_classifier(x_train, x_test, y;seed=0, goal, lower, upper)
+    """
+        Lasso Classification using cross-validation. Save the prediction in a csv file.
+
+    Arguments:
+        x_train {DataFrame} -- train set (without labels)
+        x_test {DataFrame} -- test set to predict
+        y {DataFrame} -- labels of the training data
+        seed {int} -- value of the seed to fix
+        goal {int} -- number of different lambda to try
+        lower {float} -- value of the smallest lambda to try
+        upper {float} -- value of the biggest lambda to try
+
+    Returns:
+        mach{} -- machine
+
+    """
     Random.seed!(seed)
     model = MultinomialClassifier(penalty = :l1)
     mach_lasso = machine(TunedModel(model = model,
@@ -20,11 +99,27 @@ function lasso_classifier(x_train, x_test, y, seed, goal, lower, upper)
                                     measure = MisclassificationRate()),
                                     x_train, y) |>fit!
     pred = predict_mode(mach_lasso, x_test)
-    kaggle_submit(pred, "LassoClassifier_seed$(seed)_29_11")  
+    kaggle_submit(pred, "LassoClassifier_30_11")  
     return mach_lasso
 end
 
-function ridge_classifier(x_train, x_test, y, seed, goal, lower, upper)
+function ridge_classifier(x_train, x_test, y; seed=0, goal, lower, upper)
+    """
+        Ridge Classification using cross-validation. Save the prediction in a csv file.
+
+    Arguments:
+        x_train {DataFrame} -- train set (without labels)
+        x_test {DataFrame} -- test set to predict
+        y {DataFrame} -- labels of the training data
+        seed {int} -- value of the seed to fix
+        goal {int} -- number of different lambda to try
+        lower {float} -- value of the smallest lambda to try
+        upper {float} -- value of the biggest lambda to try
+
+    Returns:
+        mach{} -- machine
+
+    """
     Random.seed!(seed)
     model = MultinomialClassifier(penalty = :l2)
     tuned_model_ridge = TunedModel(model = model,
@@ -34,7 +129,7 @@ function ridge_classifier(x_train, x_test, y, seed, goal, lower, upper)
                                     measure = MisclassificationRate())
     mach_ridge = machine(tuned_model_ridge, x_train, y) |>fit!
     pred = predict_mode(mach_ridge, x_test)
-    kaggle_submit(pred, "RidgeClassifier_28_11")  
+    kaggle_submit(pred, "RidgeClassifier_30_11")  
     return mach_ridge
 end
    
