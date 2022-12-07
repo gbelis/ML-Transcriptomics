@@ -32,3 +32,19 @@ function norm(x_train, x_test)
     norm_data = MLJ.transform(mach, total_data)
     return norm_data[1:5000,:], norm_data[5001:end,:]
 end
+function test_80_20(X, Y, n)
+    acc_test = 0
+    acc_train = 0
+    for _ in range(n)
+        dat = shuffle(hcat(X,Y))
+        X, Y = select(dat, Not(:labels)), dat.labels
+        x_test = X[1:1000,:]
+        x_train = X[1001:end,:]
+        mach = machine(SVC(), x_train, ) |> fit!
+        acc_train += mean(predict(mach, x_train) .== y[1001:end,:])
+        acc_test = mean(predict(mach, x_test) .== y[1:1000,:])
+    end
+    return acc_test/n, acc_train/n
+end
+
+range(1,5000,1000)
