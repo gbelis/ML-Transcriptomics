@@ -124,6 +124,19 @@ function kaggle_submit(df_prediction, title)
     CSV.write("./Submission/$(title).csv", prediction_kaggle)
 end
 
+function chose_predictors(x_train, x_test, std_)
+    stds = std.(eachcol(x_train))
+    stds = stds/maximum(stds)
+    x_train = x_train[:,stds.>std_]
+    x_test = select(x_test, names(x_train))
+    stds = std.(eachcol(x_test))
+    stds = stds/maximum(stds)
+    x_test = x_test[:,stds.>std_]
+    x_train = select(x_train, names(x_test))
+    return x_train, x_test
+end
+
+
 function pca(df,dimension)
     """
         Do a pca 
@@ -136,4 +149,19 @@ function pca(df,dimension)
         df_no_const {DataFrame} -- New DataFrame without proportionnal columns/predictors
     """
     return MLJ.transform(fit!(machine(PCA(maxoutdim = dimension), df)), df)
+end
+
+
+function clean(train_df, test_df)
+    x_train = remove_constant_predictors(select(train_df, Not(:labels)))
+    x_test = remove_constant_predictors(select(test_df, names(x_train)))
+    x_train = select(train_df, names(x_test))
+    return x_train, x_test
+end
+
+function no_corr(x_train, x_test)
+    x_test = remove_prop_predictors(x_test)
+    x_train = remove_prop_predictors(select(x_train, names(x_test)))
+    x_test = select(test_df, names(x_train))
+    return x_train, x_test
 end
