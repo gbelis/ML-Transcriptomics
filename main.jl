@@ -15,16 +15,15 @@ y = coerce!(train_df, :labels => Multiclass).labels
 x_train_clean, x_test_clean = clean(train_df, test_df)
 
 
-mach = machine(LogisticClassifier(), x_train_clean, y) |> fit!
-rep = report(mach)
-pred = predict_mode(mach, x_test)
-
-return mach
-
-
 x_train_preds, x_test_preds = chose_predictors(x_train_clean, x_test_clean, 0.25)
 x_train, x_test = no_corr(x_train_preds, x_test_preds)
 x_train_norm, x_test_norm = norm(x_train, x_test)
+
+
+
+
+
+
 
 
 m5 = machine(SVC(), x_train_norm[1:4000,:], y[1:4000]);
@@ -47,7 +46,7 @@ svc = SVC()
 mach = machine(TunedModel(model = svc,
                         resampling = CV(nfolds = 5),
                         measure = MisclassificationRate(),
-                        tuning = Grid(goal = 20),
+                        tuning = Grid(goal = 10),
                         range = [range(scv, :cost, lower = 100, upper = 1000, scale = :log10),
                                     range(svc, :gamma, lower = 1e-6, upper = 0.01, scale = :log10)]),
                 x_train_norm, y) |> fit!

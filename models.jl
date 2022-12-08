@@ -22,7 +22,7 @@ function fit_and_evaluate(training_data, validation_data, test_data,validation_t
     test_error = sum(MLJ.predict(mach, test_data).== validation_test))
 end
 
-function data_split(data,y, idx_train, idx_test; shuffle =true)
+function data_split(data,y, idx_train, idx_test; shuffle = true)
     """
         Split data between a train and test set
 
