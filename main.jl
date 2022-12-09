@@ -16,3 +16,4 @@ mach5=fit_and_evaluate(t2,tv2,te2,tev2)
 
 k,j,h,g = data_split(data[1:5000,:],y, 1:4000, 4001:5000, shuffle =true)
 mach5=fit_and_evaluate(k,j,h,g )
+
