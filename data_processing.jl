@@ -42,6 +42,27 @@ function remove_prop_predictors(df)
     return df[:,Not(corr_pred)]
 end
 
+function call_rates(df,pourcent)
+    """
+        Return columns with low call rates in a given DataFrame. The call rate for a given gene is defined as the proportion of measurement
+        for which the corresponding gene information is not 0. We keep only gene whose call rate is > 1%
+
+    Arguments:
+        df {DataFrame} -- data to clean
+
+    Returns :
+        df_no_const {DataFrame} -- New DataFrame without proportionnal columns/predictors
+    """
+    rates = zeros(0)
+    for column in (eachcol(df))
+        append!( rates,(sum(x->x>0, column) /length(df[:,1])) *100)
+    end
+    call_rates = DataFrame(index = names(df) , rates = rates )
+    call_rates = call_rates[(call_rates.rates.>pourcent),:]
+    return call_rates.index
+end
+
+
 function norm(x_train, x_test)
     """
         Normalize the data. Compute the norm and apply it to the data with a MLJ transform
@@ -80,10 +101,10 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
     """
 
     if from_index
-        indexes = load_data("./data/indexes.csv") #indexes of the cleaned data, to gain time
-        println(size(indexes))
+        indexes = load_data("./data/indexes_cr.csv") #indexes of the cleaned data, to gain time
         x_train = select(train_df, indexes.index)
         x_test = select(test_df, indexes.index)
+
         y = coerce!(train_df, :labels => Multiclass).labels
         if normalised
             x_train, x_test = norm(x_train, x_test)
@@ -95,16 +116,23 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
         x_train = select(train_df, names(x_test))
 
         x_test = remove_prop_predictors(x_test)
-        x_train = remove_prop_predictors(select(train_df, names(x_test)))
-        x_test = select(test_df, names(x_train))
+        x_train = remove_prop_predictors(select(x_train, names(x_test)))
+        x_test = select(x_test, names(x_train))
 
+        indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 10)
+        indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],10)
+        indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],10)
+        indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
+        x_train = select(x_train, indexes)
+        x_test = select(x_test, names(x_train))
+    
         y = coerce!(train_df, :labels => Multiclass).labels
 
         if normalised
             x_train, x_test = norm(x_train, x_test)
         end    
 
-        #CSV.write("./data/indexes3.csv",DataFrame(index=names(x_train)))
+        CSV.write("./data/indexes10.csv",DataFrame(index=names(x_train)))
     end
     return x_train,x_test,y
 end

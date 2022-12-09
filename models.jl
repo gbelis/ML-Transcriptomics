@@ -13,14 +13,15 @@ function fit_and_evaluate(training_data, validation_data, test_data,validation_t
         error {DataFrame} -- dataframe of training and test error
 
     """
-    mach = machine(TunedModel(model=RandomForestClassifier(),
-                                            resampling = CV(nfolds=3),
-                                            ranges = [range(RandomForestClassifier(), :n_trees, values=[10,100,500,1000,1500]),
-                                                     range(RandomForestClassifier(), max_depth, values=[-1,5,10])],
-                                            measure = MisclassificationRate()),
-                                            training_data, validation_data) |>fit!
+    #mach = machine(TunedModel(model=RandomForestClassifier(),
+                                            # resampling = CV(nfolds=3),
+                                            # ranges = [range(RandomForestClassifier(), :n_trees, values=[10,100,500,1000,1500]),
+                                            #          range(RandomForestClassifier(), max_depth, values=[-1,5,10])],
+                                            # measure = MisclassificationRate()),
+                                            # training_data, validation_data) |>fit!
 
     #mach = machine(RandomForestClassifier(n_trees=100,max_depth = 50),training_data, validation_data) |>fit!
+    mach = machine(MultinomialClassifier(penalty =:none),training_data, validation_data) |>fit!
     error = DataFrame(trainin_error = mean(predict_mode(mach, training_data) .!= validation_data), test_error = mean(predict_mode(mach, test_data) .!= validation_test))
     return mach, error
 end
@@ -54,117 +55,6 @@ function data_split(data,y, idx_train, idx_test; shuffle =true)
     test_valid = y[idxs[idx_test], 1])
     end
 
-function multinom_class(x_train, x_test, y; pena, lambda, title)
-    """
-        Multinomial Classification. Save the prediction in a csv file.
-
-    Arguments:
-        x_train {DataFrame} -- train set (without labels)
-        x_test {DataFrame} -- test set to predict
-        y {DataFrame} -- labels of the training data
-        pena {} -- penalty
-
-    Returns:
-        mach{} -- machine
-
-    """
-    #mach = machine(MultinomialClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
-    mach = machine(LogisticClassifier(penalty = pena, lambda = lambda), x_train, y) |> fit!
-    pred = predict_mode(mach, x_test)
-    printl(pred)
-    kaggle_submit(pred, "MultinomialClassifier_pca2_$(pena)_$(title)_30_11")
-    return mach
-end
-
-
-function lasso_classifier(x_train, x_test, y;seed=0, goal, lower, upper)
-    """
-        Lasso Classification using cross-validation. Save the prediction in a csv file.
-
-    Arguments:
-        x_train {DataFrame} -- train set (without labels)
-        x_test {DataFrame} -- test set to predict
-        y {DataFrame} -- labels of the training data
-        seed {int} -- value of the seed to fix
-        goal {int} -- number of different lambda to try
-        lower {float} -- value of the smallest lambda to try
-        upper {float} -- value of the biggest lambda to try
-
-    Returns:
-        mach{} -- machine
-
-    """
-    Random.seed!(seed)
-    model = MultinomialClassifier(penalty = :l1)
-    mach_lasso = machine(TunedModel(model = model,
-                                    resampling = CV(nfolds = 5),
-                                    tuning = Grid(goal = goal),
-                                    range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
-                                    measure = MisclassificationRate()),
-                                    x_train, y) |>fit!
-    pred = predict_mode(mach_lasso, x_test)
-    kaggle_submit(pred, "LassoClassifier_pca8000_7_5")
-    return mach_lasso
-end
-
-function ridge_classifier(x_train, x_test, y; seed=0, goal, lower, upper)
-    """
-        Ridge Classification using cross-validation. Save the prediction in a csv file.
-
-    Arguments:
-        x_train {DataFrame} -- train set (without labels)
-        x_test {DataFrame} -- test set to predict
-        y {DataFrame} -- labels of the training data
-        seed {int} -- value of the seed to fix
-        goal {int} -- number of different lambda to try
-        lower {float} -- value of the smallest lambda to try
-        upper {float} -- value of the biggest lambda to try
-
-    Returns:
-        mach{} -- machine
-
-    """
-    Random.seed!(seed)
-    model = MultinomialClassifier(penalty = :l2)
-    tuned_model_ridge = TunedModel(model = model,
-                                    resampling = CV(nfolds = 5),
-                                    tuning = Grid(goal = goal),
-                                    range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
-                                    measure = MisclassificationRate())
-    mach_ridge = machine(tuned_model_ridge, x_train, y) |>fit!
-    pred = predict_mode(mach_ridge, x_test)
-
-    kaggle_submit(pred, "RidgeClassifier_30_11")
-    return mach_ridge
-end
-
-function RandomForest_classifier(x_train, x_test, y; seed=0)
-    """
-        RandomForest Classification using cross-validation. Save the prediction in a csv file.
-
-    Arguments:
-        x_train {DataFrame} -- train set (without labels)
-        x_test {DataFrame} -- test set to predict
-        y {DataFrame} -- labels of the training data
-        seed {int} -- value of the seed to fix
-
-    Returns:
-        mach{} -- machine
-
-    """
-    Random.seed!(seed)
-    mach_forest = machine(TunedModel(model=RandomForestClassifier(),
-                                            resampling = CV(nfolds=3),
-                                            ranges = [range(RandomForestClassifier(), :n_trees, values=[10,100,500,1000,1500]),
-                                                     range(RandomForestClassifier(), :max_depth, values=[-1,5,10])],
-                                            measure = MisclassificationRate()),
-                                            x_train, y) |>fit!
-
-    training_error = mean(predict_mode(mach_forest, x_train) .!= y)
-    pred = predict_mode(mach_forest, x_test)
-    kaggle_submit(pred, "RandomForestClassifier_3_12")
-    return mach_forest, training_error
-end
 
 # function XGboost_class(x_train, x_test, y)
 
