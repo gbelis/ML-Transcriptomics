@@ -22,12 +22,16 @@ X = x_train # tout le training data
 goal, n_folds, lower, upper = 5, 1, 0, 4  #ca tu comprends
 for i in range(lower, upper, goal)
     m = 0.0
-    for j in range(0, 0, n_folds)
+    for j in range(1, n_folds, n_folds)
+        println("completed $(i*j) trainings out of $(goal*n_folds), $(i*j/goal/n_folds)%")
         train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
         
-        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y) |> fit!
+        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+        fit(verbosity = 0)!
 
         m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
     end
     push!(results, [i, m/n_folds])
 end
+
+range(1, 5, 5)

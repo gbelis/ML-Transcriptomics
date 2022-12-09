@@ -1,6 +1,7 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels,
 MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, MLJLIBSVMInterface
+using Serialization
 include("./data_processing.jl")
 include("./data_analysis.jl")
 include("./models.jl")
@@ -12,8 +13,87 @@ test_df = DataFrame(CSV.File("./data/test.csv.gz"))
 
 
 y = coerce!(train_df, :labels => Multiclass).labels
-x_train = remove_constant_predictors(select(train_df, Not(:labels)))
-x_train = remove_prop_predictors(x_train)
+x_train, x_test = clean(train_df, test_df)
+x_train, x_test = no_corr(x_train, x_test)
+
+
+
+
+#functions
+function coef_info(beta_df, x_train)
+    df = permutedims(beta_df, 1)
+    df.stds = std.(eachcol(x_train))
+    df.t_value = df[:,2] ./ df.stds
+    df.abs_t = abs.(df.t_value)
+    return df
+end
+
+function get_names(X, y, cutoff)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+end
+
+
+get_names(x_train, y, 1)
+
+
+results = DataFrame(t_cutoff = 0., accuracy = 0.)
+X = x_train
+goal, n_folds, lower, upper = 15, 3, 0, 3
+for i in range(lower, upper, goal)
+    m = 0.0
+    for j in range(0,n_folds,n_folds)
+        println("completed $(i*j) trainings out of $(goal*n_folds), $(i*j/goal/n_folds)%")
+        train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
+        pred_names = get_names(train_x, train_y, i)
+        train_x = select(train_x, pred_names)
+        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+        fit!(mach, verbosity = 0)
+        m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
+    end
+    push!(results, [i, m/n_folds])
+end
+
+maximum(results.accuracy)
+results
+scatter(results.t_cutoff[2:end], results.accuracy[2:end])
+
+
+
+results = DataFrame(t_cutoff = 0., accuracy = 0.)
+X = x_train
+goal, n_folds, lower, upper = 15, 5, 0, 4
+for i in range(lower, upper, goal)
+    m = 0.0
+    for j in range(0,0,n_folds)
+        train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
+        pred_names = get_names(train_x, train_y, i)
+        train_x = select(train_x, pred_names)
+        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+        fit!(mach, verbosity = 0)
+        m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
+    end
+    push!(results, [i, m/n_folds])
+end
+
+
+maximum(results.accuracy)
+results
+scatter(results.t_cutoff, results.accuracy)
+
+
 
 #Fitting MultinomialClassifier to get 
 mach = machine(MultinomialClassifier(penalty = :none), x_train, y) |> fit!
@@ -30,7 +110,7 @@ intercept = DataFrame(intercept = params.intercept)
 beta_df = hcat(titles, coefs)
 beta_df[1,:]
 
-
+coef_info(DataFrame(beta_df[1, :]), x_train)
 
 # CBP
 beta_df
@@ -39,13 +119,6 @@ CBP_df = permutedims(CBP_df, 1)
 CBP_df.stds = std.(eachcol(x_train))
 CBP_df.t_value = CBP_df[:,2] ./ CBP_df.stds
 CBP_df.abs_t = abs.(CBP_df.t_value)
-CBP_df
-
-CBP_df[:,2]
-
-select(CBP_df, Not([:titles, :stds])) ./ CBP_df.stds
-
-select(CBP_df, Not([:titles, :stds]))
 
 # KAT5
 KAT5_df = DataFrame(beta_df[2, :])
@@ -61,16 +134,13 @@ eGFP_df = permutedims(eGFP_df, 1)
 eGFP_df.stds = std.(eachcol(x_train))
 eGFP_df.t_value = eGFP_df.eGFP ./ eGFP_df.stds
 eGFP_df.abs_t = abs.(eGFP_df.t_value)
-eGFP_df
 
 #t_vals
 t_vals = DataFrame(genes = names(beta_df[:,2:end]), CBP = CBP_df.abs_t, KAT5 = KAT5_df.abs_t, eGFP = eGFP_df.abs_t)
 t_vals = permutedims(t_vals, 1)
 t_vals
-
-
 maxs = DataFrame(genes = names(t_vals[:,2:end]) ,maxs = maximum.(eachcol(t_vals[:,2:end])))
-chosen = maxs[maxs.maxs .> 1, :]
+chosen = maxs[maxs.maxs .> 4, :]
 chosen_names = names(permutedims(chosen, 1)[:,2:end])
 
 #Cross validation to chose t-value cutoff
@@ -118,7 +188,7 @@ X_test_sub = select(test_df, chosen_names)
 y = coerce!(train_df, :labels => Multiclass).labels
 mach_sub = machine(MultinomialClassifier(penalty = :none), X_train_sub, y) |> fit!
 pred = predict_mode(mach_sub, X_test_sub)
-kaggle_submit(pred, "Multinomial_tval1_8493preds_7_12")  
+
 
 
 
@@ -133,38 +203,3 @@ t_0_01 = 2.576813
 
 #try not to overfit
 
-
-function coef_info(beta_df, x_train)
-    df = permutedims(beta_df, 1)
-    df.stds = std.(eachcol(x_train))
-    df.t_value = df[:,2] ./ df.stds
-    df.abs_t = abs.(df.t_value)
-    return df
-end
-
-function get_names(X, y)
-    mach = machine(MultinomialClassifier(penalty = :none), X, y) |> fit!
-    params = fitted_params(mach)
-    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
-    info = DataFrame(genes = names(beta_df[:,2:end]))
-    for i in range(1,3,3)
-        info.levels(params.classes)[i] = coef_info(DataFrame(beta_df[i, :]), X)
-    end
-    
-    return
-end
-
-
-X = x_train
-
-for i in range(lower, upper, goal)
-    m = 0.0
-    for j in range(0,0,n_folds)
-        train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
-        pred_names = get_names(train_x, train_y)
-        train_x = select(train_x, pred_names)
-        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y) |> fit!
-        m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
-    end
-    push!(info, [i, m/n_folds])
-end

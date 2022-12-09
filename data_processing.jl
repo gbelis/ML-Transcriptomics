@@ -165,3 +165,29 @@ function no_corr(x_train, x_test)
     x_test = select(test_df, names(x_train))
     return x_train, x_test
 end
+
+
+function coef_info(beta_df, x_train)
+    df = permutedims(beta_df, 1)
+    df.stds = std.(eachcol(x_train))
+    df.t_value = df[:,2] ./ df.stds
+    df.abs_t = abs.(df.t_value)
+    return df
+end
+
+function get_names(X, y, cutoff)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+end
