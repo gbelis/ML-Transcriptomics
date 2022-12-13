@@ -78,12 +78,22 @@ function correlation_labels(df,predictors_nb)
     mean_KAT5 = mean.(eachcol(df[(y.=="KAT5"),:]))
     mean_eGFP = mean.(eachcol(df[(y.=="eGFP"),:]))
     
-    max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
-    results_mean= DataFrame(gene = names(df), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
-    sort!(results_mean, [:max_diff], rev=true)
+    # max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
+    # results_mean= DataFrame(gene = names(df), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
+    # sort!(results_mean, [:max_diff], rev=true)
    
-    selection = results_mean[1:predictors_nb,:]
-    x_train = select(df, selection.gene)
+    # selection = results_mean[1:predictors_nb,:]
+    # x_train = select(df, selection.gene)
+
+    results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+    sort!(results_mean, [:diff1], rev=true)
+    selection1 = results_mean[1:predictors_nb,:] 
+    sort!(results_mean, [:diff2], rev=true)
+    selection2 = results_mean[1:predictors_nb,:]
+    sort!(results_mean, [:diff3], rev=true)
+    selection3 = results_mean[1:predictors_nb,:]
+    x_train = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
+
     return x_train
 end
 
@@ -127,7 +137,7 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
     """
 
     if from_index
-        indexes = load_data("./data/indexes_5.csv") #indexes of the cleaned data, to gain time
+        indexes = load_data("./data/indexes.csv") #indexes of the cleaned data, to gain time
         x_train = select(train_df, indexes.index)
         x_test = select(test_df, indexes.index)
 
@@ -145,12 +155,12 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
         x_train = remove_prop_predictors(select(x_train, names(x_test)))
         x_test = select(x_test, names(x_train))
 
-        indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 45)
-        indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],45)
-        indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],45)
-        indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
-        x_train = select(x_train, indexes)
-        x_test = select(x_test, names(x_train))
+        # indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 45)
+        # indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],45)
+        # indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],45)
+        # indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
+        # x_train = select(x_train, indexes)
+        # x_test = select(x_test, names(x_train))
 
         x_train = correlation_labels(x_train,3000)
         x_test = select(x_test, names(x_train))
