@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
-using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, NearestNeighborModels, MLJFlux, Flux, LinearAlgebra
+using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, NearestNeighborModels, MLJFlux, Flux
 # import Pkg; Pkg.add("PlotlyJS")
 # using PlotlyJS
 # import Pkg; Pkg.add("GLM")
@@ -16,42 +16,8 @@ Random.seed!(0)
 
 x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
 # data=vcat(x_train,x_test)
-foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
+#foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
 #x_train= data[1:5000,:]
-
-mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))#./ std.(eachcol(x_train[(y.=="CBP"),:]))
-#mean_CBP2 = sum.(eachcol(x_train[(y.=="CBP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="CBP"),:]))
-mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-#mean_KAT52 = sum.(eachcol(x_train[(y.=="KAT5"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="KAT5"),:]))
-mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-#mean_eGFP2 = sum.(eachcol(x_train[(y.=="eGFP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="eGFP"),:]))
-
-max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
-
-results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
-sort!(results_mean, [:max_diff], rev=true)
-
-selection = results_mean[1:500,:] ## condition on size
-x_train2 = select(x_train, selection.gene)
-
-t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
-#CSV.write("./data/indexes_500.csv", DataFrame(index=names(x_train)))
-
-indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 60)
-indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],60)
-indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],60)
-indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
-x_train2 = select(x_train, indexes)
-
-t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
-
-CSV.write("./data/indexes_new.csv", DataFrame(index=names(x_train2)))
-sum.(eachrow(x_train))
-
 
 ############################## Call_rates
 results = DataFrame(pourcent= 0., length= 9800,accuracy = 0.9)
@@ -90,40 +56,43 @@ CSV.write("./data/results_call_rates.csv",results)
 PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=8, color=results.length, colorscale="Viridis", showscale=true)),
 Layout(title="accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
 
-
-############################## Supervised Mean Difference
-results = DataFrame(mean=0.0, length= 9801, accuracy = 0.9)
+############################## Mean Difference
+results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
 n_folds=5
 Random.seed!(0)
 
 x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
 foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
 
-mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))#./ std.(eachcol(x_train[(y.=="CBP"),:]))
-#mean_CBP2 = sum.(eachcol(x_train[(y.=="CBP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="CBP"),:]))
-mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-#mean_KAT52 = sum.(eachcol(x_train[(y.=="KAT5"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="KAT5"),:]))
-mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-#mean_eGFP2 = sum.(eachcol(x_train[(y.=="eGFP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="eGFP"),:]))
+mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))
+mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))
+mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))
+results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
 
-max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
-results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
-sort!(results_mean, [:max_diff], rev=true)
+nb_pred = sort(unique(vcat(range(10000, 20000,length=5),
+                 range(3000,10000,length=8),
+                 range(500,3000,length=51))))
 
-diff_label = collect(0:0.005:0.2)
+nb_pred= collect(3000:250:7000)
 
-for i in (diff_label)
+for i in (nb_pred)
     m = 0.0
     l = 0.0
-    selection = results_mean[results_mean.max_diff.>i,:]
-    x_train2 = select(x_train, selection.gene)
+    sort!(results_mean, [:diff1], rev=true)
+    selection1 = results_mean[1:i,:] 
+    sort!(results_mean, [:diff2], rev=true)
+    selection2 = results_mean[1:i,:]
+    sort!(results_mean, [:diff3], rev=true)
+    selection3 = results_mean[1:i,:]
+
+    x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
     l = length(x_train2[1,:])
     println(l)
 
     for j in (1:n_folds)
-        t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-        mach = machine(LogisticClassifier(penalty = :none),t2, tv2) |>fit!
-        m += mean(predict_mode(mach, te2) .== tev2)
+        train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
+            mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
+            m += mean(predict_mode(mach, test_data) .== validation_test)
     end
     push!(results, [i ,l, m/n_folds])
 end
@@ -307,6 +276,20 @@ function get_names(X, y, cutoff)
     return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
 end
 
+
+pred_names = get_names(x_train, y, 1.2)
+train_x = select(train_x, pred_names)
+l = length(train_x[1,:])
+println(l)
+train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
+mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+fit!(mach, verbosity = 0)
+m = mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
+
+
+
+
+
 ############################## ftest
 
 function f_test(x,y)
@@ -337,3 +320,5 @@ x_train2 = select(x_train, selection.gene)
 t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
 m = mean(predict_mode(mach, te2) .== tev2)
+
+#########
