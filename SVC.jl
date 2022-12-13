@@ -31,6 +31,8 @@ mach = machine(TunedModel(model = svc,
                                     range(svc, :gamma, lower = 1e-6, upper = 0.01, scale = :log10)]),
                 x_train_norm, y) |> fit!
 
+
+
 pred = predict(mach, x_test_norm)
 kaggle_submit(pred, "SCV_Norm_3021preds_3_11_v2") 
 rep = report(mach)
