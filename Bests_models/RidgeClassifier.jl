@@ -1,6 +1,6 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML
-include("./data_processing.jl")
+include("../data_processing.jl")
 
 
 #Importing Data
@@ -27,7 +27,7 @@ x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=tr
 seed , goal, lower, upper = 0,5,1e-6,1e-2
 
 Random.seed!(seed)
-model = MultinomialClassifier(penalty = :l2)
+model = LogisticClassifier(penalty = :l2)
 tuned_model_ridge = TunedModel(model = model,
                                 resampling = CV(nfolds = 5),
                                 tuning = Grid(goal = goal),
