@@ -1,6 +1,6 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML
-include("./data_processing.jl")
+include("../data_processing.jl")
 
 
 #Importing Data
@@ -27,7 +27,7 @@ upper {float} -- value of the biggest lambda to try
 seed, goal, lower, upper = 0,20,1e-7,1e-3
 
 Random.seed!(seed)
-model = MultinomialClassifier(penalty = :l1)
+model = LogisticClassifier(penalty = :l1)
 mach_lasso = machine(TunedModel(model = model,
                                 resampling = CV(nfolds = 5),
                                 tuning = Grid(goal = goal),
