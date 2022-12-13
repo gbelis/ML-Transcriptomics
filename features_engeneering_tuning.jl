@@ -14,7 +14,6 @@ test_df = load_data("./data/test.csv.gz")
 
 Random.seed!(0)
 
-
 x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
 # data=vcat(x_train,x_test)
 foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
@@ -32,14 +31,13 @@ max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CB
 results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
 sort!(results_mean, [:max_diff], rev=true)
 
-selection = results_mean[1:500,:]
+selection = results_mean[1:500,:] ## condition on size
 x_train2 = select(x_train, selection.gene)
 
 t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
 m = mean(predict_mode(mach, te2) .== tev2)
-CSV.write("./data/indexes_500.csv", DataFrame(index=names(x_train)))
-
+#CSV.write("./data/indexes_500.csv", DataFrame(index=names(x_train)))
 
 indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 60)
 indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],60)
