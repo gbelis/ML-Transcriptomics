@@ -59,7 +59,7 @@ for i in range(lower, upper, goal)
         train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
         pred_names = get_names(train_x, train_y, i)
         train_x = select(train_x, pred_names)
-        mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+        mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), train_x, train_y)
         fit!(mach, verbosity = 0)
         m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
     end
