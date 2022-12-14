@@ -12,6 +12,30 @@ test_df = load_data("./data/test.csv.gz")
 #clean data
 x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
 
+x_train = correlation_labels(x_train, 2000)
+x_test = select(x_test, names(x_train))
+training_data, validation_data, test_data,validation_test = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(MultinomialClassifier(penalty =:none),training_data,validation_data) |>fit!
+m = mean(predict_mode(mach, test_data) .== validation_test)
+
+data = vcat(x_train,x_test)
+
+pca_gene = fit!(machine(PCA(), x_train), verbosity = 0);
+vars = report(pca_gene).principalvars ./ report(pca_gene).tvar
+p2 = plot(cumsum(vars),
+          label = nothing, xlabel = "component",
+          ylabel = "cumulative prop. of variance explained")
+report(pca_gene).principalvars
+
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 1000), data)), data)
+
+
+
+training_data, validation_data, test_data,validation_test = data_split(data[1:5000,:],y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(MultinomialClassifier(penalty =:none),training_data,validation_data) |>fit!
+m = mean(predict_mode(mach, test_data) .== validation_test)
+
+
 #################### PCA
 results = DataFrame(pca= 0, accuracy = 0.89)
 n_folds=5
@@ -90,3 +114,8 @@ println(results)
 umap_proj.y=y
 PlotlyJS.plot(umap_proj, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
 Layout(title="Total explained variance: $(round(total_var, digits=2))"))
+
+#####Visualization
+
+@df x_train corrplot([:Gm42418 :Polr1b :Lrp1 :Snrnp70 :AY036118 :Hexb],
+                     grid = false, fillcolor = cgrad(), size = (700, 600))

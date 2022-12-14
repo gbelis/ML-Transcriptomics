@@ -85,14 +85,14 @@ function correlation_labels(df,predictors_nb)
     # selection = results_mean[1:predictors_nb,:]
     # x_train = select(df, selection.gene)
 
-    results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+    results_mean= DataFrame(gene = names(df), CBP = mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
     sort!(results_mean, [:diff1], rev=true)
     selection1 = results_mean[1:predictors_nb,:] 
     sort!(results_mean, [:diff2], rev=true)
     selection2 = results_mean[1:predictors_nb,:]
     sort!(results_mean, [:diff3], rev=true)
     selection3 = results_mean[1:predictors_nb,:]
-    x_train = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
+    x_train = select(df, unique([selection1.gene; selection2.gene; selection3.gene]))
 
     return x_train
 end
@@ -162,8 +162,8 @@ function clean_data(train_df, test_df; normalised=false, from_index=true)
         # x_train = select(x_train, indexes)
         # x_test = select(x_test, names(x_train))
 
-        x_train = correlation_labels(x_train,3000)
-        x_test = select(x_test, names(x_train))
+        # x_train = correlation_labels(x_train,3000)
+        # x_test = select(x_test, names(x_train))
     
         y = coerce!(train_df, :labels => Multiclass).labels
 

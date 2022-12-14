@@ -14,10 +14,14 @@ test_df = load_data("./data/test.csv.gz")
 
 Random.seed!(0)
 
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
 # data=vcat(x_train,x_test)
-#foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
-#x_train= data[1:5000,:]
+x_train = correlation_labels(x_train, 8000)
+mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), x_train, y) |> fit!
+
+t2,tv2,te2,tev2 = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5),t2, tv2) |>fit!
+m = mean(predict_mode(mach, te2) .== tev2)
 
 ############################## Call_rates
 results = DataFrame(pourcent= 0., length= 9800,accuracy = 0.9)
@@ -61,19 +65,13 @@ results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
 n_folds=5
 Random.seed!(0)
 
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
-foreach(c -> c .= (c .- mean(c)) ./ std(c), eachcol(x_train))
-
 mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))
 mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))
 mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))
 results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
 
-nb_pred = sort(unique(vcat(range(10000, 20000,length=5),
-                 range(3000,10000,length=8),
-                 range(500,3000,length=51))))
-
-nb_pred= collect(3000:250:7000)
+nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
+                                    range(200,3000,length=57))), rev=true))
 
 for i in (nb_pred)
     m = 0.0
@@ -87,22 +85,22 @@ for i in (nb_pred)
 
     x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
     l = length(x_train2[1,:])
-    println(l)
+    println(i, " length : ", l)
 
     for j in (1:n_folds)
         train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-            mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
-            m += mean(predict_mode(mach, test_data) .== validation_test)
+        mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
+        m += mean(predict_mode(mach, test_data) .== validation_test)
     end
     push!(results, [i ,l, m/n_folds])
 end
 
 println(results)
 
-CSV.write("./data/results_mean.csv",results)
+CSV.write("./data/results_mean2.csv",results)
 
-PlotlyJS.plot(PlotlyJS.scatter(x=results.mean, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="accuracy depending on the variability between labels",yaxis_title="Test accuracy", xaxis_title="difference between the means of labels", coloraxis_title = "number of predictors"))
+PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
+Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
 
 ############################## Mean and Call_rates
 results_tot = DataFrame(mean=0.0, pourcent=0, length= 9801, accuracy = 0.9)
@@ -277,14 +275,15 @@ function get_names(X, y, cutoff)
 end
 
 
-pred_names = get_names(x_train, y, 1.2)
+x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+pred_names = get_names(x_train, y, 1.9)
 train_x = select(train_x, pred_names)
 l = length(train_x[1,:])
 println(l)
 train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
 mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
 fit!(mach, verbosity = 0)
-m = mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
+m = mean(predict_mode(mach, test_x) .== test_y)
 
 
 
