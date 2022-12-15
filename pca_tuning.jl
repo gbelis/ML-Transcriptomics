@@ -10,9 +10,9 @@ train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
 
 #clean data
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
 
-x_train = correlation_labels(x_train, 2000)
+x_train = correlation_labels(x_train, 2902)
 x_test = select(x_test, names(x_train))
 training_data, validation_data, test_data,validation_test = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(MultinomialClassifier(penalty =:none),training_data,validation_data) |>fit!
@@ -27,9 +27,7 @@ p2 = plot(cumsum(vars),
           ylabel = "cumulative prop. of variance explained")
 report(pca_gene).principalvars
 
-data = MLJ.transform(fit!(machine(PCA(maxoutdim = 1000), data)), data)
-
-
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 1500), data)), data)
 
 training_data, validation_data, test_data,validation_test = data_split(data[1:5000,:],y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(MultinomialClassifier(penalty =:none),training_data,validation_data) |>fit!
@@ -60,7 +58,7 @@ end
 println(results)
 CSV.write("./data/pca_results.csv",results)
 
-########################################PCA Visualization
+######################################## PCA Visualization
 data= vcat(x_train,x_test)
 mach_pca = fit!(machine(PCA(maxoutdim = 3), data))
 data_pca = MLJ.transform(mach_pca,data)[1:5000,:]
@@ -74,7 +72,6 @@ total_var = report(mach_pca).tprincipalvar / report(mach_pca).tvar
 PlotlyJS.plot(data_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
 Layout(title="Total explained variance: $(round(total_var, digits=2))"))
 
-
 function pca_cumvar_plot(training_data)
     pca_gene = fit!(machine(PCA(), training_data), verbosity = 0);
     vars = report(pca_gene).principalvars ./ report(pca_gene).tvar
@@ -86,7 +83,6 @@ function pca_cumvar_plot(training_data)
     plot(p1, p2, layout = (1, 2), size = (700, 400))
     return report(pca_gene).principalvars
 end
-
 
 #################### UMAP
 

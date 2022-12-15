@@ -15,13 +15,27 @@ test_df = load_data("./data/test.csv.gz")
 Random.seed!(0)
 
 x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
-# data=vcat(x_train,x_test)
-x_train = correlation_labels(x_train, 8000)
-mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), x_train, y) |> fit!
+train_df = nothing
+test_df = nothing
 
-t2,tv2,te2,tev2 = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
+#################### Combinaison
+train,train_y,test,test_y = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
+x_train = correlation_labels(x_train, y, 2000)
+test = select(test, names(train))
+
+indexes_call_rates_CBP = call_rates(train[(train_y.=="CBP"),:], 20)
+indexes_call_rates_KAT5 = call_rates(train[(train_y.=="KAT5"),:],20)
+indexes_call_rates_eGFP = call_rates(train[(train_y.=="eGFP"),:],20)
+indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
+train = select(train, indexes)
+test = select(test, names(train))
+
+pred_names = get_names(train, train_y, 0.05)
+train = select(train, pred_names)
+test = select(test, names(train))
+
+mach = machine(MultinomialClassifier(penalty = :none), train,train_y) |> fit!
+m = mean(predict_mode(mach, test) .== test_y)
 
 ############################## Call_rates
 results = DataFrame(pourcent= 0., length= 9800,accuracy = 0.9)
@@ -65,39 +79,45 @@ results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
 n_folds=5
 Random.seed!(0)
 
-mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))
-mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))
-mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))
-results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+#nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
+ #                                   range(200,3000,length=57))), rev=true))
 
 nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
                                     range(200,3000,length=57))), rev=true))
 
+nb_pred = collect(2000:500:10000)
+
 for i in (nb_pred)
+    println("i ", i)
     m = 0.0
     l = 0.0
-    sort!(results_mean, [:diff1], rev=true)
-    selection1 = results_mean[1:i,:] 
-    sort!(results_mean, [:diff2], rev=true)
-    selection2 = results_mean[1:i,:]
-    sort!(results_mean, [:diff3], rev=true)
-    selection3 = results_mean[1:i,:]
-
-    x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
-    l = length(x_train2[1,:])
-    println(i, " length : ", l)
-
     for j in (1:n_folds)
-        train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-        mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
+        train_data, validation_train, test_data, validation_test = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
+        mean_CBP = mean.(eachcol(train_data[(validation_train.=="CBP"),:]))
+        mean_KAT5 = mean.(eachcol(train_data[(validation_train.=="KAT5"),:]))
+        mean_eGFP = mean.(eachcol(train_data[(validation_train.=="eGFP"),:]))
+        results_mean= DataFrame(gene = names(train_data), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+    
+        sort!(results_mean, [:diff1], rev=true)
+        selection1 = results_mean[1:i,:] 
+        sort!(results_mean, [:diff2], rev=true)
+        selection2 = results_mean[1:i,:]
+        sort!(results_mean, [:diff3], rev=true)
+        selection3 = results_mean[1:i,:]
+    
+        x_train2 = select(train_data, unique([selection1.gene; selection2.gene; selection3.gene]))
+        test_data = select(test_data, names(x_train2))
+        l += length(x_train2[1,:])
+        println(i, " length : ", l)
+        mach = machine(LogisticClassifier(penalty = :none),x_train2, validation_train) |>fit!
         m += mean(predict_mode(mach, test_data) .== validation_test)
     end
-    push!(results, [i ,l, m/n_folds])
+    push!(results, [i ,l/n_folds, m/n_folds])
 end
 
 println(results)
 
-CSV.write("./data/results_mean2.csv",results)
+CSV.write("./data/results_mean3.csv",results)
 
 PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
 Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
@@ -257,7 +277,6 @@ function coef_info(beta_df, x_train)
 end
 
 function get_names(X, y, cutoff)
-    Random.seed!(0)
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)
@@ -274,13 +293,12 @@ function get_names(X, y, cutoff)
     return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
 end
 
-
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
-pred_names = get_names(x_train, y, 1.9)
+train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
+pred_names = get_names(train_x, train_y, 1.5)
 train_x = select(train_x, pred_names)
 l = length(train_x[1,:])
 println(l)
-train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
+
 mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
 fit!(mach, verbosity = 0)
 m = mean(predict_mode(mach, test_x) .== test_y)

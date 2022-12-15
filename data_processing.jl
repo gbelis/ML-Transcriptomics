@@ -63,7 +63,7 @@ function call_rates(df,pourcent)
 end
 
 
-function correlation_labels(df,predictors_nb)
+function correlation_labels(df,label, predictors_nb)
     """
         Return columns with low call rates in a given DataFrame. The call rate for a given gene is defined as the proportion of measurement
         for which the corresponding gene information is not 0. We keep only gene whose call rate is > 1%
@@ -74,9 +74,9 @@ function correlation_labels(df,predictors_nb)
     Returns :
         df_no_const {DataFrame} -- New DataFrame without proportionnal columns/predictors
     """
-    mean_CBP = mean.(eachcol(df[(y.=="CBP"),:]))
-    mean_KAT5 = mean.(eachcol(df[(y.=="KAT5"),:]))
-    mean_eGFP = mean.(eachcol(df[(y.=="eGFP"),:]))
+    mean_CBP = mean.(eachcol(df[(label.=="CBP"),:]))
+    mean_KAT5 = mean.(eachcol(df[(label.=="KAT5"),:]))
+    mean_eGFP = mean.(eachcol(df[(label.=="eGFP"),:]))
     
     # max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
     # results_mean= DataFrame(gene = names(df), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
@@ -97,6 +97,31 @@ function correlation_labels(df,predictors_nb)
     return x_train
 end
 
+function coef_info(beta_df, x_train)
+    df = permutedims(beta_df, 1)
+    df.stds = std.(eachcol(x_train))
+    df.t_value = df[:,2] ./ df.stds
+    df.abs_t = abs.(df.t_value)
+    return df
+end
+
+function get_names_len(X, y, len)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    sort!(maxs, :maxs, rev = true)
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return maxs[1:len,:].genes#names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+end
 
 function norm(x_train, x_test)
     """
