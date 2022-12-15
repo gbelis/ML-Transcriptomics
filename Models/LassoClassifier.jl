@@ -21,6 +21,8 @@ seed {int} -- value of the seed to fix
 goal {int} -- number of different lambda to try
 lower {float} -- value of the smallest lambda to try
 upper {float} -- value of the biggest lambda to try
+
+Hyperparameter : lambda, search between 1e-2 and 1e-7 
 """
 
 seed, goal, lower, upper = 0,5,6e-5,8e-4

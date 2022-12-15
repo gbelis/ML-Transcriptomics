@@ -21,6 +21,8 @@ x_test {DataFrame} -- test set to predict
 y {DataFrame} -- labels of the training data
 seed {int} -- value of the seed to fix
 
+Hyperparameters :n_trees between 10 and 1500, max_depth between -1 and 10
+
 """
 
 seed = 0

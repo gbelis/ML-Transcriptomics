@@ -2,6 +2,21 @@ using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML
 include("../data_processing.jl")
 
+"""
+Ridge Classification using cross-validation. Save the prediction in a csv file.
+
+x_train {DataFrame} -- train set (without labels)
+x_test {DataFrame} -- test set to predict
+y {DataFrame} -- labels of the training data
+seed {int} -- value of the seed to fix
+goal {int} -- number of different lambda to try
+lower {float} -- value of the smallest lambda to try
+upper {float} -- value of the biggest lambda to try
+
+Hyperparameter : lambda, search between 1e-2 and 1e-6
+
+"""
+
 
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
@@ -11,18 +26,6 @@ test_df = load_data("./data/test.csv.gz")
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 
 ###################################################### Tuning
-"""
-        Ridge Classification using cross-validation. Save the prediction in a csv file.
-
-        x_train {DataFrame} -- train set (without labels)
-        x_test {DataFrame} -- test set to predict
-        y {DataFrame} -- labels of the training data
-        seed {int} -- value of the seed to fix
-        goal {int} -- number of different lambda to try
-        lower {float} -- value of the smallest lambda to try
-        upper {float} -- value of the biggest lambda to try
-
-"""
 
 seed , goal, lower, upper = 0,5,1e-6,1e-2
 
