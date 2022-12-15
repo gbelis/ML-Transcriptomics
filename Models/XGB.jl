@@ -3,25 +3,42 @@ using OpenML, MLJ,CSV, MLJXGBoostInterface, DataFrames, MLJLinearModels, MLJDeci
 include("../data_processing.jl")
 include("../models.jl")
 
+"""
+XGBoost Classification using cross-validation. Save the prediction in a csv file.
+
+x_train {DataFrame} -- train set (without labels)
+x_test {DataFrame} -- test set to predict
+y {DataFrame} -- labels of the training data
+Hyperparameters tuned : num_round [50,500], max_depth [2,10], eta [1e-2,0.2], min_child_weight [1,6], subsample [0.6,0.9], colsample_bytree [0.6,0.9], gamma [0,0.4]
+
+"""
+
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
 
 #clean data
-x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+
+#standardize data
+x_train, x_test = norm(x_train, x_test)
 train_df = nothing
 test_df = nothing
 
+##feature selection
 pred_names = get_names_len(x_train, y, 6000)
 x_train = select(x_train, pred_names)
-
 x_test = select(x_test, names(x_train))
+
+#pca
 data= vcat(x_train,x_test)
 data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
 
-Random.seed!(0)
+###################################################### Tuning
 
-xgb = XGBoostClassifier(max_depth=5, min_child_weight=4.33, subsample=0.75, colsample_bytree=0.75, gamma=0)
+Random.seed!(0) #fix seed
+
+xgb = XGBoostClassifier(max_depth=5, min_child_weight=4.33, subsample=0.75, colsample_bytree=0.75, gamma=0) #previously tuned
 mach = machine(TunedModel(model = xgb,
                         resampling = CV(nfolds = 4),
                         measure = MisclassificationRate(),
