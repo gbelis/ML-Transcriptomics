@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
-using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, NearestNeighborModels, MLJFlux, Flux
+using DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse#, Statistics, Distributions,OpenML, MLJFlux, Flux
 # import Pkg; Pkg.add("PlotlyJS")
 # using PlotlyJS
 # import Pkg; Pkg.add("GLM")
@@ -14,42 +14,34 @@ test_df = load_data("./data/test.csv.gz")
 
 Random.seed!(0)
 
-x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
-train_df = nothing
-test_df = nothing
-
-#################### Combinaison
-train,train_y,test,test_y = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
-x_train = correlation_labels(x_train, y, 2000)
-test = select(test, names(train))
-
-indexes_call_rates_CBP = call_rates(train[(train_y.=="CBP"),:], 20)
-indexes_call_rates_KAT5 = call_rates(train[(train_y.=="KAT5"),:],20)
-indexes_call_rates_eGFP = call_rates(train[(train_y.=="eGFP"),:],20)
-indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
-train = select(train, indexes)
-test = select(test, names(train))
-
-pred_names = get_names(train, train_y, 0.05)
-train = select(train, pred_names)
-test = select(test, names(train))
-
-mach = machine(MultinomialClassifier(penalty = :none), train,train_y) |> fit!
-m = mean(predict_mode(mach, test) .== test_y)
+#clean data
+x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+#normalisation
+x_train, x_test = norm(x_train, x_test)
 
 ############################## Call_rates
+"""
+Select the predictors with the highest call rates. 
+The call rate for a given gene is defined as the proportion of measurement 
+for which the corresponding gene information is not 0. 
+We try different pourcents of selection and observe the resulting accuracy
+"""
+# initiate a dataframe to save accuracy values
 results = DataFrame(pourcent= 0., length= 9800,accuracy = 0.9)
 n_folds=5
 
+# pourcents to try
 pourcent = collect(0:1:50)
 println(pourcent)
 
+#cross validation using a MultinomialClassifier
 for i in (pourcent)
     m = 0.0
     l = 0.0
     println("i:",i)
 
-    x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+    #select best features
+    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
     indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], i)
     indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],i)
     indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],i)
@@ -60,6 +52,7 @@ for i in (pourcent)
     println(l)
 
     for j in (1:n_folds)
+        #cross validation
         t2,tv2,te2,tev2 = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
         mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
         m += mean(predict_mode(mach, te2) .== tev2)
@@ -69,18 +62,27 @@ end
 
 println(results)
 
+#save the results
 CSV.write("./data/results_call_rates.csv",results)
 
+#make a plot of the accuracy depending of the pourcent of call rates chosen
 PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=8, color=results.length, colorscale="Viridis", showscale=true)),
 Layout(title="accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
 
 ############################## Mean Difference
+"""
+Select the predictors with the highest Mean difference between the labels. 
+We compute the difference of means between the three labels, and select a 
+certain number of the bests predictors for each 2 predictors. THis allow to 
+keep predictors that has a difference of value depending of one and another
+label type. 
+We try different number of predictors of and observe the resulting accuracy
+"""
+
+# initiate a dataframe to save accuracy values
 results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
 n_folds=5
 Random.seed!(0)
-
-#nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
- #                                   range(200,3000,length=57))), rev=true))
 
 nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
                                     range(200,3000,length=57))), rev=true))
@@ -92,6 +94,7 @@ for i in (nb_pred)
     m = 0.0
     l = 0.0
     for j in (1:n_folds)
+        #select best features
         train_data, validation_train, test_data, validation_test = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
         mean_CBP = mean.(eachcol(train_data[(validation_train.=="CBP"),:]))
         mean_KAT5 = mean.(eachcol(train_data[(validation_train.=="KAT5"),:]))
@@ -107,18 +110,21 @@ for i in (nb_pred)
     
         x_train2 = select(train_data, unique([selection1.gene; selection2.gene; selection3.gene]))
         test_data = select(test_data, names(x_train2))
+
         l += length(x_train2[1,:])
         println(i, " length : ", l)
+
+        #cross validation
         mach = machine(LogisticClassifier(penalty = :none),x_train2, validation_train) |>fit!
         m += mean(predict_mode(mach, test_data) .== validation_test)
     end
     push!(results, [i ,l/n_folds, m/n_folds])
 end
 
-println(results)
-
+#save the results
 CSV.write("./data/results_mean3.csv",results)
 
+#make a plot of the accuracy depending of the pourcent of call rates chosen
 PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
 Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
 
@@ -130,11 +136,11 @@ pourcent = collect(22:5:45)
 diff_mean = collect(0.058:0.01:0.14)
 
 
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 
 for i in (pourcent)
 
-    x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
     indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], i)
     indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],i)
     indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],i)
@@ -211,7 +217,7 @@ for i in (score_threshold)
     l = 0.0
     fs_scores = fs_scores[fs_scores.scores.>i,:]
     predictors = floor.(Int,Matrix(fs_scores)[:,1])
-    x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
     x_train = x_train[:,predictors]
     l = length(x_train[1,:])
     println(l)
@@ -235,7 +241,7 @@ t_cutoff = collect(0:0.5:3)
 
 for i in (pourcent)
 
-    x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
     indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], i)
     indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],i)
     indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],i)
@@ -338,4 +344,24 @@ t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
 m = mean(predict_mode(mach, te2) .== tev2)
 
-#########
+######### Visualization
+
+res_mean = load_data("./data/results_mean4.csv")
+res_ttest = load_data("./data/results_ttest.csv")
+res_cr = load_data("./data/results_call_rates.csv")
+
+p1 = PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
+Layout(title="Accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
+
+p2 = PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
+Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
+
+p3 = PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
+Layout(title="T-test Predictors selection ",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
+
+p = [p1; p2; p3]
+
+relayout!(p, height=600, width=600, title_text="Accuracy variation with different features selection techniques")
+
+p
+open("../Plots/Features_selection_plot.html", "w") do io PlotlyBase.to_html(io, p.plot)

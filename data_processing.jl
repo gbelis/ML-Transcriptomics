@@ -45,7 +45,7 @@ end
 function call_rates(df,pourcent)
     """
         Return columns with low call rates in a given DataFrame. The call rate for a given gene is defined as the proportion of measurement
-        for which the corresponding gene information is not 0. We keep only gene whose call rate is > 1%
+        for which the corresponding gene information is not 0. We keep only gene whose call rate is > pourcent%
 
     Arguments:
         df {DataFrame} -- data to clean
