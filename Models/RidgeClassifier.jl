@@ -8,7 +8,7 @@ train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
 
 #clean data
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 
 ###################################################### Tuning
 """
