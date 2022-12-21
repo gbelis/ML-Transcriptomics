@@ -65,15 +65,17 @@ Random.seed!(0)
 x_train
 
 model2 = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
-                σ = relu),
+                σ = relu, dropout =0.5),
                 optimiser = ADAM(),
-                batch_size = 256,
-                epochs = 1000)
+                batch_size = 128,
+                epochs = 2000,
+                alpha = 0.25)
 
 model = NeuralNetworkClassifier(builder = MLJFlux.@builder(Chain(Dense(3000, 100, relu), Dense(100, 3), dropout =0.5)),
                                 optimiser = ADAM(),
-                                batch_size = 256,
-                                epochs = 1000)
+                                batch_size = 128,
+                                epochs = 2000,
+                                alpha =0.25)
 
 tuned_model2 = TunedModel(model = model2,
                         resampling = CV(nfolds = 3),
@@ -105,3 +107,26 @@ model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
 t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach2 = fit!(machine(model,t2, tv2), verbosity = 1)
 m = mean(predict_mode(mach2, te2) .== tev2)
+
+n_neuron = [128, 300]
+n_folds = 2
+results = DataFrame([[],[]], ["n_neuron", "accuracy"])
+
+x_train2
+
+for i in n_neuron
+        m =0.0
+        model2 = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = i,
+                        σ = relu, dropout = 0.5),
+                        optimiser = ADAM(),
+                        batch_size = 128,
+                        epochs = 2000,
+                        alpha = 0.25)
+
+        for k in (1:n_folds)
+                train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
+                mach2 = fit!(machine(model2,train_data, validation_train), verbosity = 1)
+                m += mean(predict_mode(mach2, test_data) .== validation_test)
+        end
+        push!(results, [i , m/n_folds])
+    end
