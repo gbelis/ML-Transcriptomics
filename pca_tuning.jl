@@ -13,13 +13,13 @@ test_df = load_data("./data/test.csv.gz")
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 train_df = nothing
 test_df = nothing
+x_test = nothing
 
 #normalisation
 x_train, x_test = norm(x_train, x_test)
-
+x_train = MLJ.transform(fit!(machine(Standardizer(), x_train)), x_train)
 
 x_train = load_data("./data/x_train_norm.csv.gz")
-x_test = load_data("./data/x_test_norm.csv.gz")
 
 ################################## PCA
 results = DataFrame([[],[]], ["pca","accuracy"])
@@ -65,7 +65,8 @@ total_var = report(mach_pca).tprincipalvar / report(mach_pca).tvar
 
 #plot
 p= PlotlyJS.plot(data_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
-Layout(title="PCA of the 3 most relevant components. \n Total explained variance: $(round(total_var, digits=2))"))
+Layout(title="PCA of the 3 most relevant components. \n Total explained variance: $(round(total_var, digits=2),
+scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="Z AXIS TITLE"))"))
 
 #save as a html file
 open("./pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
@@ -84,8 +85,10 @@ p2 = plot(cumsum(vars),
 p3 = plot(p1, p2, layout = (1, 2), size = (700, 400))
 report(pca_gene).principalvars
 
+Plots.savefig("variance_plot.png")
+
 #save as a html file
-open("../Plots/pca_cumvar_plots.html", "w") do io PlotlyBase.to_html(io, p3.plot) end
+open(".pca_cumvar_plots.html", "w") do io PlotlyBase.to_html(io, p3.plot) end
 
 
 ################################## UMAP
@@ -138,8 +141,10 @@ Plots.savefig("corr_plot_norm.png")
 x_train= x_train[:,1:24101]
 
 #splom plot
+x_train
+x_train.labels = y
 features = [:Mid1, :Polr1b, :Hexb, :Gm42418]
-p= PlotlyJS.plot(x_train, dimensions=features, color= :label, kind="splom", Layout(title="Plot for the 4 more important genes"))
+p= PlotlyJS.plot(x_train, dimensions=features, color= :labels, kind="splom", Layout(title="Plot for the 4 more important genes"))
 
 #3d plot
 x_train.y = y

@@ -1,7 +1,7 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse#, Statistics, Distributions,OpenML, MLJFlux, Flux
-# import Pkg; Pkg.add("PlotlyJS")
-# using PlotlyJS
+import Pkg; Pkg.add("PlotlyJS")
+using PlotlyJS
 # import Pkg; Pkg.add("GLM")
 # using GLM
 
@@ -15,9 +15,15 @@ test_df = load_data("./data/test.csv.gz")
 Random.seed!(0)
 
 #clean data
-x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+x_train, x_test,y = clean_data(train_df, test_df, from_index=true)
 #normalisation
-x_train, x_test = norm(x_train, x_test)
+#x_train, x_test = norm(x_train, x_test)
+
+x_train = MLJ.transform(fit!(machine(Standardizer(), x_train)), x_train)
+
+train_df = nothing
+test_df = nothing
+x_test = nothing
 
 ############################## Call_rates
 """
@@ -27,12 +33,11 @@ for which the corresponding gene information is not 0.
 We try different pourcents of selection and observe the resulting accuracy
 """
 # initiate a dataframe to save accuracy values
-results = DataFrame(pourcent= 0., length= 9800,accuracy = 0.9)
+results = DataFrame([[],[],[]], ["pourcent","length", "accuracy"])
 n_folds=5
 
 # pourcents to try
-pourcent = collect(0:1:50)
-println(pourcent)
+pourcent = collect(0:1:100)
 
 #cross validation using a MultinomialClassifier
 for i in (pourcent)
@@ -41,14 +46,12 @@ for i in (pourcent)
     println("i:",i)
 
     #select best features
-    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
     indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], i)
     indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],i)
     indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],i)
     indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
     x_train = select(x_train, indexes)
-    x_test = select(x_test, names(x_train))
-    l = length(x_test[1,:])
+    l = length(x_train[1,:])
     println(l)
 
     for j in (1:n_folds)
@@ -59,6 +62,8 @@ for i in (pourcent)
     end
     push!(results, [i ,l, m/n_folds])
 end
+
+results.pourcent = 100 .- results.pourcent
 
 println(results)
 
@@ -81,13 +86,15 @@ We try different number of predictors of and observe the resulting accuracy
 
 # initiate a dataframe to save accuracy values
 results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
+
+results
+
 n_folds=5
 Random.seed!(0)
 
-nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73),
-                                    range(200,3000,length=57))), rev=true))
+nb_pred = floor.(Int,sort(unique(vcat(range(3000, 21000,length=73), range(200,3000,length=57))), rev=true))
 
-nb_pred = collect(2000:500:10000)
+println(results)
 
 for i in (nb_pred)
     println("i ", i)
@@ -129,14 +136,17 @@ PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode
 Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
 
 ############################## Mean and Call_rates
+"""
+Select features with both call-rates and mean methods.
+"""
+# initiate a dataframe to save accuracy values
 results_tot = DataFrame(mean=0.0, pourcent=0, length= 9801, accuracy = 0.9)
 n_folds=5
 Random.seed!(0)
-pourcent = collect(22:5:45)
-diff_mean = collect(0.058:0.01:0.14)
+pourcent = collect(22:5:45) # diferent pourcent to try
+diff_mean = collect(1000:100:3000) # different mean select numer of predictors
 
-
-x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+#clean the data
 
 for i in (pourcent)
 
@@ -186,136 +196,44 @@ Layout(title="accuracy depending on the variability between labels",yaxis_title=
 
 
 ############################## Mean Absolute Difference (MAD)
+"""
+Select features with the highest absolute mean
+"""
+
+#compute the Mean Absolute Difference
 mean_abs_diff =[]
 for column in (eachcol(x_train))
-    append!(mean_abs_diff, sum(abs.(column.-mean(column))))
+    append!(mean_abs_diff, sum(abs.(column .- mean(column))))
 end
-mean_abs_diff
 
 results_mad= DataFrame(gene = names(x_train), MAD= mean_abs_diff)
 sort!(results_mad, [:MAD], rev=true)
 
+# se lect the bests features
 selection = results_mad[results_mad.MAD.>100,:]
 x_train2 = select(x_train, selection.gene)
 
-t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(LogisticClassifier(penalty = :none),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
-
-
-############################## f-test ANOVA
-
-fs_scores = load_data("./data/fs_scores.csv")
-rename!(fs_scores,2 => :scores)
-rename!(fs_scores,1 => :predictors)
-fs_scores.predictors= fs_scores.predictors.+1
-
-score_threshold= collect(0:5:50)
-
-for i in (score_threshold)
-    m = 0.0
-    l = 0.0
-    fs_scores = fs_scores[fs_scores.scores.>i,:]
-    predictors = floor.(Int,Matrix(fs_scores)[:,1])
-    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
-    x_train = x_train[:,predictors]
-    l = length(x_train[1,:])
-    println(l)
-
-    for j in (1:n_folds)
-        t2,tv2,te2,tev2 = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
-        mach = machine(LogisticClassifier(penalty = :none),t2, tv2) |>fit!
-        m += mean(predict_mode(mach, te2) .== tev2)
-    end
-    push!(results, [i ,l, m/n_folds])
-end
-
-CSV.write("./data/results3.csv",results)
-PlotlyJS.plot(PlotlyJS.scatter(x=results.f_threshold, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="accuracy depending on the f-test score threshold chosen",yaxis_title="Test accuracy", xaxis_title="threshold of f-test", coloraxis_title = "number of predictors"))
-
-############################## t-test and call_rates
-
-pourcent = collect(0:5:30)
-t_cutoff = collect(0:0.5:3)
-
-for i in (pourcent)
-
-    x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
-    indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], i)
-    indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],i)
-    indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],i)
-    indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
-    x_train = select(x_train, indexes)
-
-    for j in (t_cutoff)
-        m = 0.0
-        l=0.0
-
-        for k in (1:n_folds)
-            println("pourcent $(i), cutoff $(j), fold $(k)")
-            train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
-            pred_names = get_names(train_x, train_y, j)
-            train_x = select(train_x, pred_names)
-            l = length(train_x[1,:])
-            println(l)
-            mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
-            fit!(mach, verbosity = 0)
-            m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
-        end
-        push!(results, [j,i,l, m/n_folds])
-    end
-end
-
-println(results)
-CSV.write("./data/results2.csv",results)
-PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
-
-
-#functions
-function coef_info(beta_df, x_train)
-    df = permutedims(beta_df, 1)
-    df.stds = std.(eachcol(x_train))
-    df.t_value = df[:,2] ./ df.stds
-    df.abs_t = abs.(df.t_value)
-    return df
-end
-
-function get_names(X, y, cutoff)
-    mach = machine(MultinomialClassifier(penalty = :none), X, y)
-    fit!(mach, verbosity = 0)
-    params = fitted_params(mach)
-    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
-    info = DataFrame(genes = names(df[:,2:end]))
-    for i in range(1,3,3)
-        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
-        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
-    end
-    info = permutedims(info, 1)
-    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
-    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
-    #maxs
-    return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
-end
-
-train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
-pred_names = get_names(train_x, train_y, 1.5)
-train_x = select(train_x, pred_names)
-l = length(train_x[1,:])
-println(l)
-
-mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
-fit!(mach, verbosity = 0)
-m = mean(predict_mode(mach, test_x) .== test_y)
-
-
-
-
+# compute the accuracy
+train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
+m += mean(predict_mode(mach, test_data) .== validation_test)
 
 ############################## ftest
+"""
+Select features according to a f-test
+"""
 
 function f_test(x,y)
+    """
+    Compute the pvalue between two data
+
+    Arguments:
+        x {DataFrame column} -- first data
+        x {DataFrame column} -- second data
+
+    Returns :
+    pValue {float}  -- pvalue
+    """
     fStat = var(x) / var(y)
     fDist = FDist(length(x) - 1, length(y) - 1)
     fCdf = cdf(fDist, fStat)
@@ -323,8 +241,10 @@ function f_test(x,y)
     return pValue
 end
 
+# initiate a dataframe to save accuracy values
 f_test_df = DataFrame([[],[],[], []], ["gene","p_value1", "p_value2", "p_value3"])
 
+#computation of the value of each predictors between eachlabels
 for i in range(1,length(x_train[1,:]))
     p1 =f_test(x_train[(y.=="CBP"),i], x_train[(y.=="KAT5"),i])
     p2 =f_test(x_train[(y.=="CBP"),i], x_train[(y.=="eGFP"),i])
@@ -332,36 +252,39 @@ for i in range(1,length(x_train[1,:]))
     push!(f_test_df,[names(x_train)[i],p1,p2,p3] )
 end
 
+# select the max pvalue between the 3 previously calculated pvalues
 f_test_df.max_pval = max.(f_test_df.p_value1,f_test_df.p_value2,f_test_df.p_value2)
 
-f_test_df
+#sort by the best pvalues
 sort!(f_test_df, [:max_pval], rev=true)
 
+#select the bests predictors
 selection = f_test_df[1:5000,:]
 x_train2 = select(x_train, selection.gene)
 
-t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
+# compute the accuracy
+train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
+m += mean(predict_mode(mach, test_data) .== validation_test)v
 
-######### Visualization
+############# Visualization
 
-res_mean = load_data("./data/results_mean4.csv")
-res_ttest = load_data("./data/results_ttest.csv")
+res_mean = load_data("./data/results_mean")
+res_ttest = load_data("./data/results_ttest")
 res_cr = load_data("./data/results_call_rates.csv")
 
-p1 = PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="Accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
+p1 = PlotlyJS.plot(PlotlyJS.scatter(x=res_cr.predictors_nb, y=res_cr.accuracy, mode="markers", marker=attr(size=5, color=res_cr.predictors_nb, colorscale="Viridis", showscale=true)),
+Layout(title="1- Accuracy depending on the call rates chosen",yaxis_title="Test accuracy"))
 
-p2 = PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
+p2 = PlotlyJS.plot(PlotlyJS.scatter(x=res_mean.predictors_nb, y=res_mean.accuracy, mode="markers", marker=attr(size=5, color=res_mean.predictors_nb, colorscale="Viridis", showscale=true)),
+Layout(title="2- Predictors selected on the mean variation between labels",yaxis_title="Test accuracy"))
 
-p3 = PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
-Layout(title="T-test Predictors selection ",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
+p3 = PlotlyJS.plot(PlotlyJS.scatter(x=res_ttest.predictors_nb, y=res_ttest.accuracy, mode="markers", marker=attr(size=5, color=res_ttest.predictors_nb, colorscale="Viridis", showscale=true)),
+Layout(title="3- T-test Predictors selection ",yaxis_title="Test accuracy", xaxis_title="number of predictors", font=attr(size=10)))
 
 p = [p1; p2; p3]
 
-relayout!(p, height=600, width=600, title_text="Accuracy variation with different features selection techniques")
+relayout!(p, height=700, width=800)#, title_text="Accuracy variation with different features selection techniques")
 
 p
-open("../Plots/Features_selection_plot.html", "w") do io PlotlyBase.to_html(io, p.plot)
+open("./Features_selection_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end

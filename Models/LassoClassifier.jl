@@ -25,7 +25,7 @@ upper {float} -- value of the biggest lambda to try
 Hyperparameter : lambda, search between 1e-2 and 1e-7 
 """
 
-seed, goal, lower, upper = 0,5,6e-5,8e-4
+seed, goal, lower, upper = 0,5, 6e-5,8e-4
 
 Random.seed!(seed)
 model = LogisticClassifier(penalty = :l1)
@@ -47,5 +47,5 @@ m = mean(predict_mode(mach, te2) .== tev2)
 ###################################################### Best Model
 
 mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), x_train, y) |> fit!
-pred = predict_mode(mach, x_tests)
+pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "LassoClassifier_best_lambda")

@@ -43,5 +43,5 @@ kaggle_submit(pred, "RidgeClassifier")
 ###################################################### Best Model
 
 mach = machine(MultinomialClassifier(penalty = :l2, lambda = 1e-3), x_train, y) |> fit!
-pred = predict_mode(mach, x_tests)
+pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "RidgeClassifierClassifier_best_hyperparameter")
