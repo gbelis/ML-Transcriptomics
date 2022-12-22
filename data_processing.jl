@@ -74,11 +74,13 @@ function correlation_labels(df,label, predictors_nb)
     Returns :
         df_best {DataFrame} -- New DataFrame with the predictors_nb first best features
     """
+
     mean_CBP = mean.(eachcol(df[(label.=="CBP"),:]))
     mean_KAT5 = mean.(eachcol(df[(label.=="KAT5"),:]))
     mean_eGFP = mean.(eachcol(df[(label.=="eGFP"),:]))
 
     results_mean= DataFrame(gene = names(df), CBP = mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+
     sort!(results_mean, [:diff1], rev=true)
     selection1 = results_mean[1:predictors_nb,:] 
     sort!(results_mean, [:diff2], rev=true)
@@ -267,4 +269,50 @@ function no_corr(x_train, x_test)
     x_train = remove_prop_predictors(select(x_train, names(x_test)))
     x_test = select(test_df, names(x_train))
     return x_train, x_test
+end
+
+
+function coef_info(beta_df, x_train)
+    df = permutedims(beta_df, 1)
+    df.stds = std.(eachcol(x_train))
+    df.t_value = df[:,2] ./ df.stds
+    df.abs_t = abs.(df.t_value)
+    return df
+end
+
+function get_names(X, y, cutoff)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+end
+
+
+
+function get_names_len(X, y, len)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    sort!(maxs, :maxs, rev = true)
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return maxs[1:len,:].genes#names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
 end
