@@ -78,7 +78,7 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 **Contents :**
 
-**1.** Methods tested and used for genes selection and dimensionality reduction.
+1. Methods tested and used for genes selection and dimensionality reduction.
 
     1.1. PCA tuning and evaluation of the accuracy after a PCA.
 
