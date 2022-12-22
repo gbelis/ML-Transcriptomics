@@ -80,14 +80,14 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 1. Methods tested and used for genes selection and dimensionality reduction.
 
-    1.1. PCA tuning and evaluation of the accuracy after a PCA.
+    --> 1.1. PCA tuning and evaluation of the accuracy after a PCA.
 
-    1.2. Selection of more important genes using a statistical T-test.
+    --> 1.2. Selection of more important genes using a statistical T-test.
 
-    1.3. Testing of data processing techniques.
+    --> 1.3. Testing of data processing techniques.
 
 
-**2.** Different machine learning models that we have used to predict the experimental condition.
+2. Different machine learning models that we have used to predict the experimental condition.
 
     --> 2.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
 
@@ -110,7 +110,7 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
     --> 2.10. Tuning of XGBoost Model.
 
 
-**3.** Intersting Plots useful for data interpretation, data analysis and features selection.
+3. Intersting Plots useful for data interpretation, data analysis and features selection.
 
     --> 3.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
@@ -123,17 +123,17 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
     --> 3.5. PCA explained variance plot
 
 
-**4.** Best Kaggle Submissions.
+4. Best Kaggle Submissions.
 
-**5.** Train, Test data and indexes of selected genes after cleaning.
+5. Train, Test data and indexes of selected genes after cleaning.
 
-**6.** Readme.
+6. Readme.
 
-**7.** Code for all figures.
+7. Code for all figures.
 
-**8.** Template for feature selection tuning with a certain model.
+8. Template for feature selection tuning with a certain model.
 
-**9.** Functions used for data processing and features engeneering.
+9. Functions used for data processing and features engeneering.
 
-**10.** Functions for evaluation and cross validation of machine learning techniques.
+10. Functions for evaluation and cross validation of machine learning techniques.
 
