@@ -80,47 +80,47 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 1. Methods tested and used for genes selection and dimensionality reduction.
 
-    --> 1.1. PCA tuning and evaluation of the accuracy after a PCA.
+    1.1. PCA tuning and evaluation of the accuracy after a PCA.
 
-    --> 1.2. Selection of more important genes using a statistical T-test.
+    1.2. Selection of more important genes using a statistical T-test.
 
-    --> 1.3. Testing of data processing techniques.
+    1.3. Testing of data processing techniques.
 
 
 2. Different machine learning models that we have used to predict the experimental condition.
 
-    --> 2.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
+    2.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
 
-    --> 2.2. Simple Mutlinomial Classifier on all the training data.
+    2.2. Simple Mutlinomial Classifier on all the training data.
 
-    --> 2.3. Neural Network tuning by Camille.
+    2.3. Neural Network tuning by Camille.
 
-    --> 2.4. Neural Network tuning by Guillaume.
+    2.4. Neural Network tuning by Guillaume.
 
-    --> 2.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
+    2.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
 
-    --> 2.6. Tuning of a Ridge Classifier.
+    2.6. Tuning of a Ridge Classifier.
 
-    --> 2.7. Tuned Machine of a SVC model.
+    2.7. Tuned Machine of a SVC model.
 
-    --> 2.8. Classification with two different steps. The first predicting wether the cell is control (eGFP) or modified (CBP or KAT5). Then split KAT5 and CBP after. 
+    2.8. Classification with two different steps. The first predicting wether the cell is control (eGFP) or modified (CBP or KAT5). Then split KAT5 and CBP after. 
 
-    --> 2.9. Supervised UMAP in python.
+    2.9. Supervised UMAP in python.
 
-    --> 2.10. Tuning of XGBoost Model.
+    2.10. Tuning of XGBoost Model.
 
 
 3. Intersting Plots useful for data interpretation, data analysis and features selection.
 
-    --> 3.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
+    3.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
-    --> 3.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+    3.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
 
-    --> 3.3. Histogramme showing the distributions of the experimental conditions in the training data.
+    3.3. Histogramme showing the distributions of the experimental conditions in the training data.
 
-    --> 3.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
+    3.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
 
-    --> 3.5. PCA explained variance plot
+    3.5. PCA explained variance plot
 
 
 4. Best Kaggle Submissions.
