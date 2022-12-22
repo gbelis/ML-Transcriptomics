@@ -37,7 +37,7 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 ## :card_file_box: Files and contents
 
-Structure:
+**Structure:**
 - |-- Features_selection..............................................................................................................................1
      - |-- pca_tuning.jl................................................................................................................................1.1
      - |-- statistics.jl....................................................................................................................................1.2
@@ -76,64 +76,64 @@ Structure:
      - |-- data_processing.jl.........................................................................................................................9
      - |-- models.jl......................................................................................................................................10
 
-Contents :
+**Contents :**
 
-1. Methods tested and used for genes selection and dimensionality reduction.
+**1.** Methods tested and used for genes selection and dimensionality reduction.
 
---> 1.1. PCA tuning and evaluation of the accuracy after a PCA.
+    --> 1.1. PCA tuning and evaluation of the accuracy after a PCA.
 
---> 1.2. Selection of more important genes using a statistical T-test.
+    --> 1.2. Selection of more important genes using a statistical T-test.
 
---> 1.3. Testing of data processing techniques.
-
-
-2. Different machine learning models that we have used to predict the experimental condition.
-
---> 2.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
-
---> 2.2. Simple Mutlinomial Classifier on all the training data.
-
---> 2.3. Neural Network tuning by Camille.
-
---> 2.4. Neural Network tuning by Guillaume.
-
---> 2.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
-
---> 2.6. Tuning of a Ridge Classifier.
-
---> 2.7. Tuned Machine of a SVC model.
-
---> 2.8. Classification with two different steps. The first predicting wether the cell is control (eGFP) or modified (CBP or KAT5). Then split KAT5 and CBP after. 
-
---> 2.9. Supervised UMAP in python.
-
---> 2.10. Tuning of XGBoost Model.
+    --> 1.3. Testing of data processing techniques.
 
 
-3. Intersting Plots useful for data interpretation, data analysis and features selection.
+**2.** Different machine learning models that we have used to predict the experimental condition.
 
---> 3.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
+    --> 2.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
 
---> 3.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+    --> 2.2. Simple Mutlinomial Classifier on all the training data.
 
---> 3.3. Histogramme showing the distributions of the experimental conditions in the training data.
+    --> 2.3. Neural Network tuning by Camille.
 
---> 3.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
+    --> 2.4. Neural Network tuning by Guillaume.
 
---> 3.5. PCA explained variance plot
+    --> 2.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
+
+    --> 2.6. Tuning of a Ridge Classifier.
+
+    --> 2.7. Tuned Machine of a SVC model.
+
+    --> 2.8. Classification with two different steps. The first predicting wether the cell is control (eGFP) or modified (CBP or KAT5). Then split KAT5 and CBP after. 
+
+    --> 2.9. Supervised UMAP in python.
+
+    --> 2.10. Tuning of XGBoost Model.
 
 
-4. Best Kaggle Submissions.
+**3.** Intersting Plots useful for data interpretation, data analysis and features selection.
 
-5. Train, Test data and indexes of selected genes after cleaning.
+    --> 3.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
-6. Readme.
+    --> 3.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
 
-7. Code for all figures.
+    --> 3.3. Histogramme showing the distributions of the experimental conditions in the training data.
 
-8. Template for feature selection tuning with a certain model.
+    --> 3.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
 
-9. Functions used for data processing and features engeneering.
+    --> 3.5. PCA explained variance plot
 
-10. Functions for evaluation and cross validation of machine learning techniques.
+
+**4.** Best Kaggle Submissions.
+
+**5.** Train, Test data and indexes of selected genes after cleaning.
+
+**6.** Readme.
+
+**7.** Code for all figures.
+
+**8.** Template for feature selection tuning with a certain model.
+
+**9.** Functions used for data processing and features engeneering.
+
+**10.** Functions for evaluation and cross validation of machine learning techniques.
 
