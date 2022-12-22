@@ -8,17 +8,19 @@ include("./data_processing.jl")
 include("./data_analysis.jl")
 include("./models.jl")
 
+# fix seed
+Random.seed!(0)
 
-#Importing Data
-train_df = DataFrame(CSV.File("./data/train.csv.gz"))
-test_df = DataFrame(CSV.File("./data/test.csv.gz"))
-
-y = coerce!(train_df, :labels => Multiclass).labels
-x_train, x_test = clean(train_df, test_df)
-x_train, x_test = no_corr(x_train, x_test)
+#clean data
+x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+#normalisation
 x_train_norm, x_test_norm = norm(x_train, x_test)
 
 
+# y = coerce!(train_df, :labels => Multiclass).labels
+# x_train, x_test = clean(train_df, test_df)
+# x_train, x_test = no_corr(x_train, x_test)
+# x_train_norm, x_test_norm = norm(x_train, x_test)
 
 x_train_sel = correlation_labels(x_train_norm, 5000)
 x_test_sel = select(x_test, names(x_train_sel))
@@ -76,3 +78,19 @@ x_train_3_log = correlation_labels(log2.(x_train.+1), 3)
 x_train_3_log.y = y
 x_train_3_log
 PlotlyJS.plot(x_train_3_log, x=:Gm42418, y=:Gm26917, z=:Hexb, color=:y, kind="scatter3d", mode="markers")
+
+
+# Histogram of distribution of label in the training set
+df = DataFrame( label = ["CBP","KAT5","eGFP"], 
+                sample_nb = [length(x_train_norm[(y.=="CBP"),:][:,1]), 
+                            length(x_train_norm[(y.=="KAT5"),:][:,1]), 
+                            length(x_train_norm[(y.=="eGFP"),:][:,1])])
+
+p1 = PlotlyJS.plot(df, x=:label, y=:sample_nb, height=300, kind="bar", Layout(title="Distributions of experimental conditions in the training data"))
+open("./histogram.html", "w") do io PlotlyBase.to_html(io, p1.plot) end
+
+#Confusion matrix
+train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
+mach = machine(MultinomialClassifier(penalty =:none),train_data, validation_train) |>fit!
+m = mean(predict_mode(mach, test_data) .== validation_test)
+confusion_matrix(predict_mode(mach, test_data), validation_test)
