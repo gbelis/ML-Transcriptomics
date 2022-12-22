@@ -130,3 +130,33 @@ for i in n_neuron
         end
         push!(results, [i , m/n_folds])
     end
+
+println(results)
+
+CSV.write("./data/results_nn.csv",results)
+
+x_train2=nothing
+
+indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 25)
+indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],25)
+indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],25)
+indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
+x_train2 = select(x_train, indexes)
+indexes_call_rates_CBP =nothing
+indexes_call_rates_KAT5 = nothing
+indexes_call_rates_eGFP = nothing
+indexes=nothing
+x_train2 = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), x_train2)), x_train2)
+
+model2 = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
+                σ = relu, dropout = 0.5),
+                optimiser = ADAM(),
+                batch_size = 64,
+                alpha =0.5) 
+
+tuned_model2 = TunedModel(model = model2,
+                        resampling = CV(nfolds = 3),
+                        tuning = Grid(goal = 2),
+                        range = range(model2, :epochs, values =[1500,2000]),
+                        measure = MisclassificationRate()) 
+mach3 = fit!(machine(tuned_model2, x_train2, y), verbosity = 1)
