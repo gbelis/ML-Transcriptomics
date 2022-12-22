@@ -16,7 +16,7 @@ y = coerce!(train_df, :labels => Multiclass).labels
 x_train, x_test = clean(train_df, test_df)
 x_train, x_test = no_corr(x_train, x_test)
 
-
+x_train
 
 
 #functions
@@ -28,7 +28,7 @@ function coef_info(beta_df, x_train)
     return df
 end
 
-function get_names(X, y, cutoff)
+function get_names_len(X, y, len)
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)
@@ -40,35 +40,42 @@ function get_names(X, y, cutoff)
     end
     info = permutedims(info, 1)
     maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    sort!(maxs, :maxs, rev = true)
     #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
     #maxs
-    return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+    return maxs[1:len,:].genes#names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
 end
 
 
-get_names(x_train, y, 1)
 
+train_x, train_y, test_x, test_y = data_split(x_train,y, 1:4000, 4001:5000)
+pred_names = get_names(train_x, train_y,6000)
+pred_names
+train_x = select(train_x, pred_names)
+mach = machine(MultinomialClassifier(penalty = :none), train_x, train_y)
+fit!(mach, verbosity = 0)
+mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
 
-results = DataFrame(t_cutoff = 0., accuracy = 0.)
+results = DataFrame([[],[]], ["length","accuracy"])
 X = x_train
-goal, n_folds, lower, upper = 15, 3, 0, 3
+goal, n_folds, lower, upper = 5, 1, 1000, 6000 
 for i in range(lower, upper, goal)
     m = 0.0
-    for j in range(0,n_folds,n_folds)
+    for j in range(1,n_folds,n_folds)
         println("completed $(i*j) trainings out of $(goal*n_folds), $(i*j/goal/n_folds)%")
         train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
-        pred_names = get_names(train_x, train_y, i)
+        pred_names = get_names(train_x, train_y, Int(trunc(i)))
         train_x = select(train_x, pred_names)
         mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), train_x, train_y)
         fit!(mach, verbosity = 0)
         m += mean(predict_mode(mach, select(test_x, pred_names)) .== test_y)
     end
-    push!(results, [i, m/n_folds])
+    push!(results, [Int(trunc(i)), m/n_folds])
 end
 
 maximum(results.accuracy)
 results
-scatter(results.t_cutoff[2:end], results.accuracy[2:end])
+scatter(results.length[4:end], results.accuracy[4:end])
 
 
 

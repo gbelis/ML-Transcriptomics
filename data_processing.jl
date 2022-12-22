@@ -85,14 +85,14 @@ function correlation_labels(df,predictors_nb)
     # selection = results_mean[1:predictors_nb,:]
     # x_train = select(df, selection.gene)
 
-    results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+    results_mean= DataFrame(gene = names(df), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
     sort!(results_mean, [:diff1], rev=true)
     selection1 = results_mean[1:predictors_nb,:] 
     sort!(results_mean, [:diff2], rev=true)
     selection2 = results_mean[1:predictors_nb,:]
     sort!(results_mean, [:diff3], rev=true)
     selection3 = results_mean[1:predictors_nb,:]
-    x_train = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
+    x_train = select(df, unique([selection1.gene; selection2.gene; selection3.gene]))
 
     return x_train
 end
@@ -243,4 +243,24 @@ function get_names(X, y, cutoff)
     #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
     #maxs
     return names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
+end
+
+
+
+function get_names_len(X, y, len)
+    mach = machine(MultinomialClassifier(penalty = :none), X, y)
+    fit!(mach, verbosity = 0)
+    params = fitted_params(mach)
+    df = hcat(DataFrame(titles = levels(params.classes)), DataFrame(params.coefs))
+    info = DataFrame(genes = names(df[:,2:end]))
+    for i in range(1,3,3)
+        #info.levels(params.classes)[i] = coef_info(DataFrame(df[i, :]), X)
+        info = hcat(info, coef_info(DataFrame(df[Int(i), :]), X).abs_t, makeunique=true)
+    end
+    info = permutedims(info, 1)
+    maxs = DataFrame(genes = names(info[:,2:end]) ,maxs = maximum.(eachcol(info[:,2:end])))
+    sort!(maxs, :maxs, rev = true)
+    #chosen_names = names(permutedims(maxs[maxs.maxs .> 1, :], 1)[:,2:end])
+    #maxs
+    return maxs[1:len,:].genes#names(permutedims(maxs[maxs.maxs .> cutoff, :], 1)[:,2:end])
 end
