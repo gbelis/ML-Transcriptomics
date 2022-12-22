@@ -9,6 +9,7 @@ XGBoost Classification using cross-validation. Save the prediction in a csv file
 x_train {DataFrame} -- train set (without labels)
 x_test {DataFrame} -- test set to predict
 y {DataFrame} -- labels of the training data
+
 Hyperparameters tuned : num_round [50,500], max_depth [2,10], eta [1e-2,0.2], min_child_weight [1,6], subsample [0.6,0.9], colsample_bytree [0.6,0.9], gamma [0,0.4]
 """
 

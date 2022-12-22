@@ -51,12 +51,10 @@ Structure:
      
 - |-- Plots .................................................................................................................................................................2
      - |-- Features_selection_plot.html...............................................................................................................2.1
-     - |-- corr_plot.png..............................................................................................................................2.2
-     - |-- corr_plot_norm.png.........................................................................................................................2.3
-     - |-- histo.svg..................................................................................................................................2.4
-     - |-- histogram.html.............................................................................................................................2.5
-     - |-- pca_plot.html..............................................................................................................................2.6
-     - |-- variance_plot.png..........................................................................................................................2.7
+     - |-- corr_plot_norm.png.........................................................................................................................2.2
+     - |-- histogram.html.............................................................................................................................2.3
+     - |-- pca_plot.html..............................................................................................................................2.4
+     - |-- variance_plot.png..........................................................................................................................2.5
 
 - |-- Submission.............................................................................................................................................................3
      - |-- ........................................................................................................................................3.1
@@ -83,34 +81,58 @@ Structure:
 - |-- pca_tuning.jl...................................................................................................................................12
 - |-- statistics.jl...................................................................................................................................13
 
-Contents:
+Contents :
 
 1. Different machine learning models that we have used to predict the experimental condition.
 
---> 1.3. and 1.4. 
+--> 1.1. Tuning of the lambda hyperparameter of a Lasso Classifier and best model found.
 
---> 1.8. Supervised UMAP in python
+--> 1.2. Simple Mutlinomial Classifier on all the training data.
+
+--> 1.3. Neural Network tuning by Camille.
+
+--> 1.4. Neural Network tuning by Guillaume.
+
+--> 1.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
+
+--> 1.6. Tuning of a Ridge Classifier.
+
+--> 1.7. Tuned Machine of a SVC model.
+
+--> 1.8. Supervised UMAP in python.
+
+--> 1.9. Tuning of XGBoost Model.
+
 
 2. Intersting Plots useful for data interpretation, data analysis and features selection.
 
---> 2.1. 
+--> 2.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
---> 2.2. 
+--> 2.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
 
---> 2.3.
+--> 2.3. Histogramme showing the distributions of the experimental conditions in the training data.
 
---> 2.4. 
+--> 2.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
 
---> 2.5.
+--> 2.5. PCA explained variance plot
 
---> 2.6. 
-
---> 2.7.
 
 3. Best Kaggle Submissions.
-4. Train, Test data and indexes of selected gene after cleaning.
-5. 
-6. 
-7. 
-8. 
 
+4. Train, Test data and indexes of selected genes after cleaning.
+
+5. Readme.
+
+6. Classification with two different steps. The first predicting wether the cell is control (eGFP) or modified (CBP or KAT5). Then split KAT5 and CBP after.  
+
+7. Code for all figures.
+
+8. Functions used for data processing and features engeneering.
+
+9. Testing of data processing techniques.
+
+10. Functions for evaluation and cross validation of machine learning techniques.
+
+11. PCA tuning and evaluation of the accuracy after a PCA.
+
+12. Selection of more important genes using a statistical T-test.

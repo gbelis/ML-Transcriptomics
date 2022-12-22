@@ -3,7 +3,6 @@ using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics
 MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 using Serialization
 include("./data_processing.jl")
-include("./data_analysis.jl")
 include("./models.jl")
 
 
