@@ -4,8 +4,8 @@ using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, MLJFlux, Flux
 import Pkg; Pkg.add("PlotlyJS")
 using PlotlyJS
-include("./data_processing.jl")
-include("./models.jl")
+include("../data_processing.jl")
+include("../models.jl")
 
 #Importing Data
 train_df = load_data("./data/train.csv.gz")

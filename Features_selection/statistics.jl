@@ -2,8 +2,8 @@ using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels,
 MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 using Serialization
-include("./data_processing.jl")
-include("./models.jl")
+include("../data_processing.jl")
+include("../models.jl")
 
 
 #Importing Data

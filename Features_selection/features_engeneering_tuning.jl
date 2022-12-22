@@ -5,8 +5,8 @@ using DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse#, Statistics, Dist
 import Pkg; Pkg.add("PlotlyJS")
 using PlotlyJS
 
-include("./data_processing.jl")
-include("./models.jl")
+include("../data_processing.jl")
+include("../models.jl")
 
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
