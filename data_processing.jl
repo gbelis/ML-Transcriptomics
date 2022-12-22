@@ -1,3 +1,5 @@
+# This file contains all useful functions for data processing and features engeneering
+
 function load_data(path)
     """
         Load the data at "path" localization in the form of a dataframe
@@ -22,7 +24,6 @@ function remove_constant_predictors(df)
         df_no_const {DataFrame} -- New DataFrame without constante columns/predictors
     """
     df_no_const = df[:,  std.(eachcol(df)) .!= 0]
-    #df_no_const = df[:,  std.(eachcol(df)) .> 0.1]
     return df_no_const
 end
 
@@ -188,20 +189,10 @@ function clean_data(train_df, test_df; from_index=true)
         x_test = remove_prop_predictors(x_test)
         x_train = remove_prop_predictors(select(x_train, names(x_test)))
         x_test = select(x_test, names(x_train))
-
-        # indexes_call_rates_CBP = call_rates(x_train[(y.=="CBP"),:], 45)
-        # indexes_call_rates_KAT5 = call_rates(x_train[(y.=="KAT5"),:],45)
-        # indexes_call_rates_eGFP = call_rates(x_train[(y.=="eGFP"),:],45)
-        # indexes= unique([indexes_call_rates_CBP; indexes_call_rates_KAT5;indexes_call_rates_eGFP])
-        # x_train = select(x_train, indexes)
-        # x_test = select(x_test, names(x_train))
-
-        # x_train = correlation_labels(x_train,3000)
-        # x_test = select(x_test, names(x_train))
     
         y = coerce!(train_df, :labels => Multiclass).labels  
 
-        CSV.write("./data/indexes10.csv",DataFrame(index=names(x_train)))
+        CSV.write("./data/new_indexes.csv",DataFrame(index=names(x_train)))
     end
     return x_train,x_test,y
 end
@@ -235,17 +226,17 @@ end
 
 
 
-function no_const(train_df, test_df)
+function clean(train_df, test_df)
     """
-    Removes predictors that are constant either in training or test set
+        Remove constant columns in a train and test DataFrame
 
     Arguments:
-        x_train {DataFrame} -- train set
-        x_test {DataFrame} -- test set
+        train_df {DataFrame} -- training dataframe
+        test_df {DataFrame} -- test data
 
     Returns :
-        x_train {DataFrame} -- training set without constant predictors
-        x_test {DataFrame} --  test set without constant predictors
+    train_df {DataFrame} -- cleaned train data
+    test_df {DataFrame} -- cleaned test data
     """
     x_train = remove_constant_predictors(select(train_df, Not(:labels)))
     x_test = remove_constant_predictors(select(test_df, names(x_train)))
@@ -255,15 +246,15 @@ end
 
 function no_corr(x_train, x_test)
     """
-    Removes one predictor of a predictor pair that are intercorrelated either in training or test set
+    Remove correlated columns in a train and test DataFrame
 
     Arguments:
-        x_train {DataFrame} -- train set
-        x_test {DataFrame} -- test set
+        train_df {DataFrame} -- training dataframe
+        test_df {DataFrame} -- test data
 
     Returns :
-        x_train {DataFrame} -- training set with no intercorrelated predictors
-        x_test {DataFrame} -- training set with no intercorrelated predictors
+    train_df {DataFrame} -- cleaned train data
+    test_df {DataFrame} -- cleaned test data
     """
     x_test = remove_prop_predictors(x_test)
     x_train = remove_prop_predictors(select(x_train, names(x_test)))
@@ -273,16 +264,6 @@ end
 
 
 function coef_info(beta_df, x_train)
-    """
-    Extracts data from regression analysis
-
-    Arguments:
-        beta_df {DataFrame} -- data frame containing coeficients from regression
-        x_train {DataFrame} -- training set
-
-    Returns :
-        df {DataFrame} -- data frame contaning standard deviation, t values and its absolute value for every coeficient
-    """
     df = permutedims(beta_df, 1)
     df.stds = std.(eachcol(x_train))
     df.t_value = df[:,2] ./ df.stds
@@ -291,16 +272,6 @@ function coef_info(beta_df, x_train)
 end
 
 function get_names(X, y, cutoff)
-    """
-    Finds the best predicotrs using regression. Keeps all preds with t value > cutoff
-
-    Arguments:
-        X {DataFrame} -- train set
-        y -- Labels
-    
-    Returns:
-        names of the  chosen predictors
-    """
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)
@@ -320,16 +291,6 @@ end
 
 
 function get_names_len(X, y, len)
-    """
-    Finds the best predicotrs using regression. Keeps len best predictors
-
-    Arguments:
-        X {DataFrame} -- train set
-        y {CategoricalArray} -- Labels
-    
-    Returns:
-        names of the chosen predictors
-    """
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)

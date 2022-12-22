@@ -1,3 +1,5 @@
+# This file contains functions for evaluation and cross validation of machine learning techniques
+
 function evaluate(mach, training_data, validation_data, test_data,validation_test)
     """
         Evaluate the data
