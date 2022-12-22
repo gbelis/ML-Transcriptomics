@@ -1,3 +1,5 @@
+# This file contains code for all figures 
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 import Pkg; Pkg.add("PlotlyJS")
 using Plots, DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML, NearestNeighborModels,

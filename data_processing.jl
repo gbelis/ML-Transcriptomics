@@ -205,7 +205,18 @@ end
 
 
 
-function clean(train_df, test_df)
+function no_const(train_df, test_df)
+    """
+    Removes predictors that are constant either in training or test set
+
+    Arguments:
+        x_train {DataFrame} -- train set
+        x_test {DataFrame} -- test set
+
+    Returns :
+        x_train {DataFrame} -- training set without constant predictors
+        x_test {DataFrame} --  test set without constant predictors
+    """
     x_train = remove_constant_predictors(select(train_df, Not(:labels)))
     x_test = remove_constant_predictors(select(test_df, names(x_train)))
     x_train = select(train_df, names(x_test))
@@ -213,6 +224,17 @@ function clean(train_df, test_df)
 end
 
 function no_corr(x_train, x_test)
+    """
+    Removes one predictor of a predictor pair that are intercorrelated either in training or test set
+
+    Arguments:
+        x_train {DataFrame} -- train set
+        x_test {DataFrame} -- test set
+
+    Returns :
+        x_train {DataFrame} -- training set with no intercorrelated predictors
+        x_test {DataFrame} -- training set with no intercorrelated predictors
+    """
     x_test = remove_prop_predictors(x_test)
     x_train = remove_prop_predictors(select(x_train, names(x_test)))
     x_test = select(test_df, names(x_train))
@@ -221,6 +243,16 @@ end
 
 
 function coef_info(beta_df, x_train)
+    """
+    Extracts data from regression analysis
+
+    Arguments:
+        beta_df {DataFrame} -- data frame containing coeficients from regression
+        x_train {DataFrame} -- training set
+
+    Returns :
+        df {DataFrame} -- data frame contaning standard deviation, t values and its absolute value for every coeficient
+    """
     df = permutedims(beta_df, 1)
     df.stds = std.(eachcol(x_train))
     df.t_value = df[:,2] ./ df.stds
@@ -229,6 +261,16 @@ function coef_info(beta_df, x_train)
 end
 
 function get_names(X, y, cutoff)
+    """
+    Finds the best predicotrs using regression. Keeps all preds with t value > cutoff
+
+    Arguments:
+        X {DataFrame} -- train set
+        y -- Labels
+    
+    Returns:
+        names of the  chosen predictors
+    """
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)
@@ -248,6 +290,16 @@ end
 
 
 function get_names_len(X, y, len)
+    """
+    Finds the best predicotrs using regression. Keeps len best predictors
+
+    Arguments:
+        X {DataFrame} -- train set
+        y {CategoricalArray} -- Labels
+    
+    Returns:
+        names of the chosen predictors
+    """
     mach = machine(MultinomialClassifier(penalty = :none), X, y)
     fit!(mach, verbosity = 0)
     params = fitted_params(mach)

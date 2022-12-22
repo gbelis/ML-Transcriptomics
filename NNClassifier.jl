@@ -77,7 +77,7 @@ plot(tunedNN)
 mean(predict_mode(tunedNN, x_train_sel) .== y)
 
 # ==================================================================
-# Supervised UMAP
+# Supervised UMAP --- Garbage
 train_umap_df = DataFrame(CSV.File("./data/train_umap.csv"))[:,2:end]
 test_umap_df = DataFrame(CSV.File("./data/test_umap.csv"))[:,2:end]
 train_umap_df
@@ -87,15 +87,15 @@ tunedNN = machine(TunedModel(model = model,
 						        resampling = CV(nfolds = 5),
 								tuning = Grid(goal = 10),
 	                            range = range(model, :(builder.dropout), lower = .0, upper = .9, scale = :linear),
-								   measure = MisclassificationRate()), x_train_sel, y) |>fit!
+								   measure = MisclassificationRate()), train_umap_df, y) |>fit!
 rep = report(tunedNN)
 rep.best_model
 rep.history
 plot(tunedNN)
-mean(predict_mode(tunedNN, x_train_sel) .== y)
+mean(predict_mode(tunedNN, train_umap_df) .== y)
 
-pred = predict_mode(tunedNN, x_test_sel)
-kaggle_submit(pred, "NNShort_500preds_100h_170ep_256bs_09do")
+pred = predict_mode(tunedNN, test_umap_df)
+kaggle_submit(pred, "UMAPSup100_NN_ep10_do03_bs256")
 
 
 
@@ -120,3 +120,48 @@ tunedNN = TunedModel(model = model,
 
 pred = predict_mode(tunedNN, x_test_sel)
 kaggle_submit(pred, "NNC_1x100_eptuned.csv")
+
+
+
+# ======== USING DIY TUNING ==============
+
+
+
+results = DataFrame([[],[]], ["dropout", "accuracy"])
+
+
+X = x_train_norm # tout le training data
+
+goal, n_folds, lower, upper = 10, 4, 0, 0.9  #ca tu comprends
+iter = 0
+for i in range(lower, upper, goal)
+    m = 0.0
+    for j in range(1, n_folds, n_folds)
+        println("completed $(iter += 1) trainings out of $(goal*n_folds), $(iter/goal/n_folds*100)%")
+
+		#Splitting Data
+        train_x, train_y, test_x, test_y = data_split(X,y, 1:4000, 4001:5000)
+
+		# Getting predictors
+		names_sel = get_names_len(train_x, train_y, 6000)
+		x_train_sel = select(train_x, names_sel)
+		x_test_sel = select(test_x, names_sel)
+
+		mach_pca = fit!(machine(PCA(maxoutdim = 3000), x_train_sel))
+		x_train = MLJ.transform(mach_pca,x_train_sel)
+		x_test = MLJ.transform(mach_pca,x_test_sel)
+
+
+		# Creating and Fitting machine
+        model = NeuralNetworkClassifier(builder = MLJFlux.Short(n_hidden = 500, dropout = i), batch_size = 256, epochs = 50)
+        mach = machine(model, x_train, train_y)
+        fit!(mach, verbosity = 1)
+
+		# Evaluating 
+        m += mean(predict_mode(mach, x_test) .== test_y)
+    end
+    push!(results, [i, m/n_folds])
+end
+
+
+scatter(results.dropout, results.accuracy)
