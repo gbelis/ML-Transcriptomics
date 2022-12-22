@@ -8,7 +8,11 @@ train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
 
 #clean data
-x_train,x_test,y = clean_data(train_df, test_df, normalised=false, from_index=true)
+x_train,x_test,y = clean_data(train_df, test_df, normalised=true, from_index=true)
+x_train = correlation_labels(x_train, 3500)
+x_test = select(x_test, names(x_train))
+data= vcat(x_train,x_test)
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 2000), data)), data)
 
 Random.seed!(0)
 
@@ -28,6 +32,6 @@ plot(mach)
 
 ###################################################### Best Model
 
-training_data, validation_data, test_data,validation_test = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
+training_data, validation_data, test_data,validation_test = data_split(data[1:5000,:],y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(XGBoostClassifier(eta = 0.2, num_round=500, max_depth=5, min_child_weight=4.33, subsample=0.75, colsample_bytree=0.75, gamma=0), training_data, validation_data) |> fit!
-m = mean(predict_mode(mach, test_data) .!= validation_test)
+m = mean(predict_mode(mach, test_data) .== validation_test)
