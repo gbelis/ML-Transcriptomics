@@ -80,11 +80,11 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 **1.** Methods tested and used for genes selection and dimensionality reduction.
 
-    --> 1.1. PCA tuning and evaluation of the accuracy after a PCA.
+    1.1. PCA tuning and evaluation of the accuracy after a PCA.
 
-    --> 1.2. Selection of more important genes using a statistical T-test.
+    1.2. Selection of more important genes using a statistical T-test.
 
-    --> 1.3. Testing of data processing techniques.
+    1.3. Testing of data processing techniques.
 
 
 **2.** Different machine learning models that we have used to predict the experimental condition.
