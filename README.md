@@ -93,9 +93,9 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
     2.2. Simple Mutlinomial Classifier on all the training data.
 
-    2.3. Neural Network tuning by Camille.
+    2.3. Neural Network tuning with mean difference features selection and PCA.
 
-    2.4. Neural Network tuning by Guillaume.
+    2.4. Neural Network tuning with T-test features selection and PCA.
 
     2.5. Tuning of n_trees and max_depth hyperparameters of a Random Forest Classifier.
 

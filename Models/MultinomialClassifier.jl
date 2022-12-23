@@ -18,5 +18,5 @@ test_df = load_data("./data/test.csv.gz")
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 
 mach = machine(LogisticClassifier(penalty = :none), x_train, y) |> fit!
-pred = predict_mode(mach, x_tests)
+pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "MultinomialClassifier")
