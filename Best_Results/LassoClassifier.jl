@@ -16,14 +16,7 @@ x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 seed, goal, lower, upper = 0,9, 6e-5, 1e-4
 
 Random.seed!(seed)
-model = LogisticClassifier(penalty = :l1)
-mach_lasso = machine(TunedModel(model = model,
-                                resampling = CV(nfolds = 5),
-                                tuning = Grid(goal = goal),
-                                range = range(model, :lambda, lower = lower, upper = upper),
-                                measure = MisclassificationRate()),
-                                x_train, y) |>fit!
-fitted_params(mach_lasso).best_model
-report(mach_lasso)
+model = LogisticClassifier(penalty = :l1, lambda = 8.5e-5)
+mach_lasso = fit!(machine(model,x_train, y), verbosity = 1)
 pred = predict_mode(mach_lasso, x_test)
-kaggle_submit(pred, "LassoClassifier_12")
+kaggle_submit(pred, "LassoClassifier_best_model")

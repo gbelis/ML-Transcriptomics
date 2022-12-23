@@ -46,7 +46,7 @@ data = vcat(x_train2,x_test)
 data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
 
 x_train2= data[1:5000,:]
-x_test = data[5000:8093,:]
+x_test = data[5001:8093,:]
 
 #fix seed
 Random.seed!(0)
@@ -170,8 +170,29 @@ mach = fit!(machine(model,x_train2, y), verbosity = 1)
 
 
 
+###################################################### Try with a different pre-processing
 
+mean_CBP = mean.(eachcol(train_data[(validation_train.=="CBP"),:])) # select the mean of the expression of each label for each genes.
+mean_KAT5 = mean.(eachcol(train_data[(validation_train.=="KAT5"),:]))
+mean_eGFP = mean.(eachcol(train_data[(validation_train.=="eGFP"),:]))
+# Compute the difference of these means
+means= DataFrame(gene = names(train_data), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, diff1=abs.(mean_CBP-mean_eGFP), diff2=abs.(mean_eGFP -mean_KAT5), diff3=(abs.(mean_CBP -mean_KAT5)))
+sort!(means, [:diff1], rev=true)
+selection1 = means[1:6000,:] 
+sort!(means, [:diff2], rev=true)
+selection2 = means[1:6000,:]
+sort!(means, [:diff3], rev=true)
+selection3 = means[1:6000,:]
+x_train2 = select(train_data, unique([selection1.gene; selection2.gene; selection3.gene]))
+x_test = select(x_test, names(x_train2))
 
+data = vcat(x_train2,x_test)
+# Do a PCA to reduce the features to 3000
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
+x_train2= data[1:5000,:]
+x_test = data[5001:8093,:]
+
+Random.seed!(0)
 
 model2 = NeuralNetworkClassifier(builder = MLJFlux.@builder(Chain(Dense(3000, 128, relu), Dense(100, 3), dropout =0.5)),
     optimiser = ADAM(),

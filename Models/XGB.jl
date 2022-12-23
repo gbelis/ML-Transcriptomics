@@ -28,6 +28,7 @@ x_train, x_test = norm(x_train, x_test)
 train_df = nothing
 test_df = nothing
 
+
 ###################################################### Tuning of max_depth and min_child_weight
 
 Random.seed!(0) #fix seed
@@ -77,6 +78,21 @@ fitted_params(mach).best_model
 plot(mach)
 
 
+###################################################### Reduction of dimension
+
+#select features using a t-test
+pred_names = get_names_len(x_train, y, 6000)
+x_train = select(x_train, pred_names)
+
+x_test = select(x_test, names(x_train))
+
+#pca
+data= vcat(x_train,x_test)
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
+data = vcat(x_train2,x_test)
+
+x_train2= data[1:5000,:]
+x_test = data[5001:8093,:]
 ###################################################### Tuning of eta and num_round
 
 Random.seed!(0) #fix seed
@@ -88,7 +104,7 @@ mach = machine(TunedModel(model = xgb,
                         tuning = Grid(goal = 16),
                         range = [range(xgb, :eta, lower = 1e-2, upper = .2, scale = :log),
                                 range(xgb, :num_round, lower = 50, upper = 500)]),
-                                x_train, y)
+                                x_train2, y)
 fit!(mach)
 pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "XGBClassifier_pca")
@@ -105,10 +121,10 @@ mach = machine(TunedModel(model = xgb,
                         measure = MisclassificationRate(),
                         tuning = Grid(goal = 5),
                         range = range(xgb, :eta, lower = .2, upper = .6, scale = :log)),
-                                x_train, y)
+                                x_train2, y)
 fit!(mach)
 pred = predict_mode(mach, x_test)
-kaggle_submit(pred, "XGBClassifier_pca")
+kaggle_submit(pred, "XGBClassifier")
 fitted_params(mach).best_model
 plot(mach)
 

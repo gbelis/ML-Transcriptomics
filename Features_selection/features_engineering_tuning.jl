@@ -169,12 +169,9 @@ for i in (pourcent)
         println("pourcent $(i), cutoff $(j)")
         m = 0.0
         l=0.0
-        mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))#./ std.(eachcol(x_train[(y.=="CBP"),:]))
-        #mean_CBP2 = sum.(eachcol(x_train[(y.=="CBP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="CBP"),:]))
-        mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-        #mean_KAT52 = sum.(eachcol(x_train[(y.=="KAT5"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="KAT5"),:]))
-        mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))#./ std.(eachcol(x_train[(y.=="KAT5"),:]))
-        #mean_eGFP2 = sum.(eachcol(x_train[(y.=="eGFP"),:]))./sum.(x->x>0, eachcol(x_train[(y.=="eGFP"),:]))
+        mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))
+        mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))
+        mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))
 
         max_diff= max.(abs.(mean_CBP -mean_KAT5),abs.(mean_KAT5-mean_eGFP), abs.(mean_CBP-mean_eGFP))
         results_mean= DataFrame(gene = names(x_train), CBP= mean_CBP, KAT5= mean_KAT5, eGFP = mean_eGFP, max_diff=max_diff)
