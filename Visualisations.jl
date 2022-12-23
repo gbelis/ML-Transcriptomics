@@ -10,6 +10,8 @@ include("./models.jl")
 
 train_df = DataFrame(CSV.File("./data/train.csv.gz"))
 test_df = DataFrame(CSV.File("./data/test.csv.gz"))
+y = coerce!(train_df, :labels => Multiclass).labels
+
 
 # fix seed
 Random.seed!(0)
@@ -92,15 +94,15 @@ explained_variance = report(mach_pca).principalvars
 explained_variance ./= sum(explained_variance)
 explained_variance .*= 100
 dimensions = Symbol.(names(data_pca))
-data_pca.y=y
+data_pca.Labels=y
 total_var = report(mach_pca).tprincipalvar / report(mach_pca).tvar
 
 #plot
-p= PlotlyJS.plot(data_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
-Layout(title = "PCA of the 3 most relevant components.", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
+p= PlotlyJS.plot(data_pca, x=:x1, y=:x2, z=:x3, color=:Labels, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
+Layout(title = "PCA: 3 Components", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
 
 #save as a html file
-open("./pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
+open("./Plots/pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
 
 
 #######################################
@@ -110,10 +112,12 @@ data_log  = log.(data .+ 1)
 data_log_std = MLJ.transform(fit!(machine(Standardizer(), data_log)))
 mach_log_pca = fit!(machine(PCA(maxoutdim = 3), data_log_std))
 data_log_pca = MLJ.transform(mach_log_pca,data_log_std)
-data_log_pca.y=y
+data_log_pca.Labels=y
 
-p= PlotlyJS.plot(data_log_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr([Symbol("x", i) => "PC $i" for i in 1:3]...), 
-Layout(title = "PCA of the 3 most relevant components.", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
+p= PlotlyJS.plot(data_log_pca, x=:x1, y=:x2, z=:x3, color=:Labels, kind="scatter3d", mode="markers", 
+Layout(title = "Log PCA: 3 Components", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
+
+open("./Plots/pca_plot_log.html", "w") do io PlotlyBase.to_html(io, p.plot) end
 
 #######################################
 #PCA Variance plot
@@ -171,16 +175,16 @@ open("../Plots/pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
 # Plotting 3 predicotrs time 
 
 
-pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Mid1", "Hexb", "Gm42418"]))))
-pred_plot.y = y
-PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")
-
-pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Gm42418", "Gm26917", "Snrnp70"]))))
-pred_plot.y = y
-PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")
+pred_plot_1 = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Mid1", "Hexb", "Gm42418"]))))
+pred_plot_1.labels = y
+p = PlotlyJS.plot(pred_plot_1, x=:Mid1, y=:Hexb, z=:Gm42418, color=:labels, kind="scatter3d", mode="markers",  Layout(title="Mid1, Hexb, Gm42418"))
+#save as html file
+open("./Plots/pred_plot_Mid1_Hexb_Gm42418.html", "w") do io PlotlyBase.to_html(io, p.plot) end
 
 
 
-pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Mid1", "Hexb", "Gm42418"]))))
-pred_plot.y = y
-PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")
+pred_plot_1 = MLJ.transform(fit!(machine(Standardizer(), log.(select(train_df, ["Mid1", "Hexb", "Gm42418"]) .+ 1))))
+pred_plot_1.labels = y
+p = PlotlyJS.plot(pred_plot_1, x=:Mid1, y=:Hexb, z=:Gm42418, color=:labels, kind="scatter3d", mode="markers",  Layout(title="Mid1, Hexb, Gm42418 Log"))
+#save as html file
+open("./Plots/pred_plot_Mid1_Hexb_Gm42418_LOG.html", "w") do io PlotlyBase.to_html(io, p.plot) end
