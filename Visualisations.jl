@@ -7,19 +7,17 @@ MLJXGBoostInterface, MLJDecisionTreeInterface, MLJMultivariateStatsInterface, ML
 include("./data_processing.jl")
 include("./models.jl")
 
+
+train_df = DataFrame(CSV.File("./data/train.csv.gz"))
+test_df = DataFrame(CSV.File("./data/test.csv.gz"))
+
 # fix seed
 Random.seed!(0)
-
 #clean data
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 #normalisation
 x_train_norm, x_test_norm = norm(x_train, x_test)
 
-
-# y = coerce!(train_df, :labels => Multiclass).labels
-# x_train, x_test = clean(train_df, test_df)
-# x_train, x_test = no_corr(x_train, x_test)
-# x_train_norm, x_test_norm = norm(x_train, x_test)
 
 x_train_sel = correlation_labels(x_train_norm, 5000)
 x_test_sel = select(x_test, names(x_train_sel))
@@ -58,28 +56,6 @@ Layout(title="Total explained variance: $(round(total_var, digits=2))"))
 
 names(x_train_sel) == names(x_train_sel_log)
 
-
-
-x_train_3 = correlation_labels(x_train_norm, 3)
-x_train_3.y = y
-x_train_3
-PlotlyJS.plot(x_train_3, x=:Hexb, y=:Gm26917, z=:Lrp1, color=:y, kind="scatter3d", mode="markers")
-
-
-
-x_train_3_log_norm = correlation_labels(x_train_log, 3)
-x_train_3_log_norm.y = y
-x_train_3_log_norm
-PlotlyJS.plot(x_train_3_log_norm, x=:Gm42418, y=:Gm26917, z=:Hexb, color=:y, kind="scatter3d", mode="markers")
-
-
-x_train_3_log = correlation_labels(log2.(x_train.+1), 3)
-x_train_3_log.y = y
-x_train_3_log
-PlotlyJS.plot(x_train_3_log, x=:Gm42418, y=:Gm26917, z=:Hexb, color=:y, kind="scatter3d", mode="markers")
-
-
-
 ########################################  
 # Histogram of distribution of label in the training set
 
@@ -103,11 +79,14 @@ confusion_matrix(predict_mode(mach, test_data), validation_test)
 #######################################
 #PCA Visualization
 #Visualize PCA with px.scatter_3d, we can visualize the 3 first dimensions of a pca
+data = remove_prop_predictors(remove_constant_predictors(select(train_df, Not(:labels))))
+
+data_std = MLJ.transform(fit!(machine(Standardizer(), data)))
+
 
 #fit a PCA
-data= vcat(x_train,x_test)
-mach_pca = fit!(machine(PCA(maxoutdim = 3), data))
-data_pca = MLJ.transform(mach_pca,data)[1:5000,:]
+mach_pca = fit!(machine(PCA(maxoutdim = 3), data_std))
+data_pca = MLJ.transform(mach_pca,data_std)
 #compute the variance
 explained_variance = report(mach_pca).principalvars
 explained_variance ./= sum(explained_variance)
@@ -118,11 +97,23 @@ total_var = report(mach_pca).tprincipalvar / report(mach_pca).tvar
 
 #plot
 p= PlotlyJS.plot(data_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr(;[Symbol("x", i) => "PC $i" for i in 1:3]...), 
-Layout(title="PCA of the 3 most relevant components. \n Total explained variance: $(round(total_var, digits=2),
-scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="Z AXIS TITLE"))"))
+Layout(title = "PCA of the 3 most relevant components.", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
 
 #save as a html file
 open("./pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
+
+
+#######################################
+#Log PCA
+data = remove_prop_predictors(remove_constant_predictors(select(train_df, Not(:labels))))
+data_log  = log.(data .+ 1)
+data_log_std = MLJ.transform(fit!(machine(Standardizer(), data_log)))
+mach_log_pca = fit!(machine(PCA(maxoutdim = 3), data_log_std))
+data_log_pca = MLJ.transform(mach_log_pca,data_log_std)
+data_log_pca.y=y
+
+p= PlotlyJS.plot(data_log_pca, x=:x1, y=:x2, z=:x3, color=:y, kind="scatter3d", mode="markers" ,labels=attr([Symbol("x", i) => "PC $i" for i in 1:3]...), 
+Layout(title = "PCA of the 3 most relevant components.", scene = attr(xaxis_title="PCA1", yaxis_title="PCA2", zaxis_title="PCA3")))
 
 #######################################
 #PCA Variance plot
@@ -175,3 +166,21 @@ p= PlotlyJS.plot(x_train, x=:Mid1, y= :Polr1b, z =:Hexb, color=:y, kind="scatter
 
 #save as html file
 open("../Plots/pca_plot.html", "w") do io PlotlyBase.to_html(io, p.plot) end
+
+######################################################
+# Plotting 3 predicotrs time 
+
+
+pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Mid1", "Hexb", "Gm42418"]))))
+pred_plot.y = y
+PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")
+
+pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Gm42418", "Gm26917", "Snrnp70"]))))
+pred_plot.y = y
+PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")
+
+
+
+pred_plot = MLJ.transform(fit!(machine(Standardizer(), select(train_df, ["Mid1", "Hexb", "Gm42418"]))))
+pred_plot.y = y
+PlotlyJS.plot(pred_plot, x=:Mid1, y=:Hexb, z=:Gm42418, color=:y, kind="scatter3d", mode="markers")

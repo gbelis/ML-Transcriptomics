@@ -1,3 +1,5 @@
+# This is the file used for the tuning of neural networks.
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLCourse, Statistics, Distributions, OpenML, MLJMultivariateStatsInterface, MLJFlux, Flux, MLJLinearModels
 include("../data_processing.jl")
@@ -76,7 +78,7 @@ plot(tunedNN)
 mean(predict_mode(tunedNN, x_train_sel) .== y)
 
 # ==================================================================
-# Supervised UMAP --- Garbage
+# Supervised UMAP --- Massively overfit the data
 train_umap_df = DataFrame(CSV.File("./data/train_umap.csv"))[:,2:end]
 test_umap_df = DataFrame(CSV.File("./data/test_umap.csv"))[:,2:end]
 train_umap_df

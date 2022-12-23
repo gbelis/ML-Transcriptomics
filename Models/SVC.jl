@@ -1,3 +1,5 @@
+# This is the file used for the tuning of Support Vector Machines (SVM) or in this case Support Vector Classifier (SVC)
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLCourse, Statistics, Distributions,OpenML, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 include("../data_processing.jl")
