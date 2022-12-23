@@ -1,4 +1,4 @@
-# This file contains all pca tuning work.
+# This file contains all PCA tuning .
 
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, MLJFlux, Flux
@@ -13,6 +13,8 @@ test_df = load_data("./data/test.csv.gz")
 
 #clean data
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
+
+# to use less RAM
 train_df = nothing
 test_df = nothing
 
@@ -25,6 +27,8 @@ n_folds=5
 
 # Tuning of pca : hyperparameters maxoutdim, search space : [100,10000]
 pca_dimension = collect(100:100:10000)
+
+pca_dimension = 3
 
 for i in (pca_dimension)
     m = 0.0

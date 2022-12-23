@@ -1,3 +1,5 @@
+# Fitting and Tuning of a Lasso Classifier model
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML
 include("../data_processing.jl")
@@ -22,23 +24,27 @@ goal {int} -- number of different lambda to try
 lower {float} -- value of the smallest lambda to try
 upper {float} -- value of the biggest lambda to try
 
-Hyperparameter : lambda, search between 1e-2 and 1e-7 
+Hyperparameter : lambda, search between 1e-2 and 1e-8
+
 """
 
 seed, goal, lower, upper = 0,8, 1e-8, 1e-2
 
 Random.seed!(seed)
 model = LogisticClassifier(penalty = :l1)
+
+lower = 8.5e-5
+upper = 8.5e-4
+goal = 2
+
 mach_lasso = machine(TunedModel(model = model,
-                                resampling = CV(nfolds = 5),
+                                resampling = CV(nfolds = 2),
                                 tuning = Grid(goal = goal),
                                 range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
                                 measure = MisclassificationRate()),
                                 x_train, y) |>fit!
 fitted_params(mach_lasso).best_model
 report(mach_lasso)
-pred = predict_mode(mach_lasso, x_test)
-kaggle_submit(pred, "LassoClassifier_")
 
 # We search precisely the best lambda
 seed, goal, lower, upper = 0,10, 1e-5, 1e-3
@@ -53,8 +59,6 @@ mach_lasso = machine(TunedModel(model = model,
                                 x_train, y) |>fit!
 fitted_params(mach_lasso).best_model
 report(mach_lasso)
-pred = predict_mode(mach_lasso, x_test)
-kaggle_submit(pred, "LassoClassifier_12")
 
 # And more precisely
 seed, goal, lower, upper = 0,9, 6e-5, 1e-4
@@ -70,11 +74,11 @@ mach_lasso = machine(TunedModel(model = model,
 fitted_params(mach_lasso).best_model
 report(mach_lasso)
 pred = predict_mode(mach_lasso, x_test)
-kaggle_submit(pred, "LassoClassifier_12")
+kaggle_submit(pred, "Best_lasso_regress")
 
 
 ###################################################### Best Model
 
 mach = machine(MultinomialClassifier(penalty = :l1, lambda = 8.5e-5), x_train, y) |> fit!
 pred = predict_mode(mach, x_test)
-kaggle_submit(pred, "LassoClassifier_best_lambda")
+kaggle_submit(pred, "Best_lasso_regress")

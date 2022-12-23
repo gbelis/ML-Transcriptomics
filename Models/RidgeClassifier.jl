@@ -1,3 +1,5 @@
+# Fitting and Tuning of a Ridge Classifier model
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML
 include("../data_processing.jl")

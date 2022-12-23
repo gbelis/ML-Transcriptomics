@@ -1,6 +1,6 @@
 # ML_Project
 
-## *Epigenetic plasticity as a signature for memory allocation -:computer: Miniproject BIO-322*
+## *Epigenetic plasticity as a signature for memory allocation - :computer: Miniproject BIO-322*
 
 ## Aim
 
@@ -72,15 +72,17 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
      - |-- test.csv.gz.....................................................................................................................................6.2
      - |-- train.csv.gz....................................................................................................................................6.3
 
-     - |-- README.md ...............................................................................................................................7
-     - |-- Visualisations.jl.............................................................................................................................8
-     - |-- cross_val.jl....................................................................................................................................9
-     - |-- data_processing.jl.........................................................................................................................10
-     - |-- models.jl......................................................................................................................................11
+- |-- Google_Colab.ipynb .............................................................................................................................7
+- |-- README.md ....................................................................................................................................8
+- |-- Visualisations.jl..................................................................................................................................9
+- |-- cross_val.jl.........................................................................................................................................10
+- |-- data_processing.jl..............................................................................................................................11
+- |-- models.jl...........................................................................................................................................12
 
+.....
 **Contents :**
 
-2. Best Models obtained
+1. Best Models obtained
 
      1.1 Best linear mathod : Lasso Classifier tuning 
 
@@ -134,13 +136,15 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 6. Train, Test data and indexes of selected genes after cleaning.
 
-7. Readme.
+7. Notebook julia to run a code on Google colab, need to download this file and save it in a google drive.
 
-8. Code for all figures.
+8. Readme.
 
-9. Template for feature selection tuning with a certain model.
+9. Code for all figures.
 
-10. Functions used for data processing and features engeneering.
+10. Template for feature selection tuning with a certain model.
 
-11. Functions for evaluation and cross validation of machine learning techniques.
+11. Functions used for data processing and features engeneering.
+
+12. Functions for evaluation and cross validation of machine learning techniques.
 
