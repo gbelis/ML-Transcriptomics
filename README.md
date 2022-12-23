@@ -10,11 +10,9 @@ In this project, we will be analyzing high-dimensional data of Giulia Santoni, o
 
 Guillaume Belissent and Camille Challier
 
-This is a private project but we accept advices on how to improve our project and optimize the code!
-
 ## Project description
 
-The training data consist of normalized counts for 32285 genes in 5000 different cells together with the experimental condition under which each cell was measured.  The test data contains only the normalized counts and our task is to predict the experimental condition.
+The training data consists of normalized counts for 32285 genes in 5000 different cells together with the experimental condition under which each cell was measured. The test data contains only the normalized counts and our task is to predict the experimental condition.
 In this project we tried to find the best feature selection and machine learning techniques to predict the experimental condition.
 Through this work, we hope to gain new insights into the markers of epigenetic modifications in different experimental conditions.
 
