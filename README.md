@@ -62,8 +62,8 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
      - |-- corr_plot_norm.png........................................................................................................................4.2
      - |-- Features_selection_plot.png..........................................................................................................4.3
      - |-- histogram.html................................................................................................................................4.4
-     - |-- pred_plot_Mid1_Hexb_Gm42418.html and png......................................................................................4.5
-     - |-- pred_plot_Mid1_Hexb_Gm42418_LOG.html and png.............................................................................4.6
+     - |-- pred_plot_Mid1_Hexb_Gm42418_LOG.html and png...................................................................4.5
+     - |-- pred_plot_Mid1_Hexb_Gm42418.html and png.............................................................................4.6
      - |-- variance_plot.png...........................................................................................................................4.7
 
 - |-- Submission............................................................................................................................................5
@@ -125,21 +125,22 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 4. Intersting Plots useful for data interpretation, data analysis and features selection.
 
-     4.1. Heatmap of the 13 most important genes.
+
+     4.1. Histogramm showing the distributions of the experimental conditions in the training data.
+
+     ![Histogram](https://user-images.githubusercontent.com/92453354/209339606-eecf75d2-13c0-4b3f-afce-ababb2add1aa.png)
+
+     4.2. Heatmap of the 13 most important genes.
    
     ![clustermap](https://user-images.githubusercontent.com/92453354/209339284-b00ac23d-aa62-4537-801c-4c6c038fbfdc.png)
 
-     4.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+     4.3. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
    
      ![corr_plot_norm](https://user-images.githubusercontent.com/92453354/209339326-966fc15b-44e0-4af7-b798-ea211990f9da.png)
 
      4.3. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
      ![features](https://user-images.githubusercontent.com/92453354/209339267-4c4d14b3-060d-49a3-96fa-8863b1c268cd.png)
-
-     4.4. Histogramm showing the distributions of the experimental conditions in the training data.
-
-     ![Histogram](https://user-images.githubusercontent.com/92453354/209339606-eecf75d2-13c0-4b3f-afce-ababb2add1aa.png)
 
      4.5. Spatial representation of Mid1, Hexb and Gm42418 genes.
 
