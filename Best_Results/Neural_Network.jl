@@ -5,16 +5,6 @@ using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse
 include("../data_processing.jl")
 include("../models.jl")
 
-"""
-Neural Network Classification using cross-validation. Save the prediction in a csv file.
-
-x_train {DataFrame} -- train set (without labels)
-x_test {DataFrame} -- test set to predict
-y {DataFrame} -- labels of the training data
-Hyperparameters tuned :
-
-"""
-
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
@@ -41,6 +31,7 @@ selection3 = results_mean[1:6000,:]
 x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
 
 data = vcat(x_train2,x_test)
+
 # Do a PCA to reduce the features to 3000
 data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
 
@@ -50,7 +41,8 @@ x_test = data[5001:8093,:]
 #fix seed
 Random.seed!(0)
 
-model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
+#Neural network fitting with best hyperparameters found in NN.jl
+model = NeuralNetworkClassifier(builder = MLJFlux.Short(n_hidden = 128,
                 σ = relu, dropout = 0.5),
                 optimiser = ADAM(),
                 batch_size = 128,
@@ -58,3 +50,6 @@ model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
                 alpha = 0.25)
 
 mach = fit!(machine(model,x_train2, y), verbosity = 1)
+
+pred = predict_mode(mach, x_test)
+kaggle_submit(pred, "Submission_NN_mean")

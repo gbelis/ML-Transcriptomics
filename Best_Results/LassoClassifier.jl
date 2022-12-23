@@ -12,10 +12,9 @@ test_df = load_data("./data/test.csv.gz")
 #clean data
 x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 
-#Previously tuned to find an interval of the best lambda
-seed, goal, lower, upper = 0,9, 6e-5, 1e-4
+#fix seed
+Random.seed!(0)
 
-Random.seed!(seed)
 model = LogisticClassifier(penalty = :l1, lambda = 8.5e-5)
 mach_lasso = fit!(machine(model,x_train, y), verbosity = 1)
 pred = predict_mode(mach_lasso, x_test)
