@@ -1,3 +1,5 @@
+# Fitting and Tuning of a RandomForest Classifier model
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using MLJ, Plots, MLJFlux, Flux, OpenML, DataFrames, MLJLinearModels, MLJDecisionTreeInterface, MLJMultivariateStatsInterface
 include("../data_processing.jl")

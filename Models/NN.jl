@@ -1,3 +1,5 @@
+# Fitting and Tuning of a Simple Short Neural Network
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, StatsPlots, MLJ, MLJLinearModels, MLCourse, Statistics, Distributions,OpenML,  MLJMultivariateStatsInterface, NearestNeighborModels, MLJFlux, Flux
 include("../data_processing.jl")
@@ -23,6 +25,7 @@ x_train,x_test,y = clean_data(train_df, test_df, from_index=true)
 #standardize data
 x_train, x_test = norm(x_train, x_test)
 
+#select 6000 best genes according to the mean difference
 mean_CBP = mean.(eachcol(x_train[(y.=="CBP"),:]))
 mean_KAT5 = mean.(eachcol(x_train[(y.=="KAT5"),:]))
 mean_eGFP = mean.(eachcol(x_train[(y.=="eGFP"),:]))
@@ -38,8 +41,10 @@ selection3 = results_mean[1:6000,:]
 
 x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
 
+# Do a PCA to reduce the features to 3000
 x_train2 = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), x_train2)), x_train2)
 
+#fix seed
 Random.seed!(0)
 
 ###################################################### Tuning dropout
@@ -92,8 +97,8 @@ model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
 
 tuned_model = TunedModel(model = model,
                         resampling = CV(nfolds = 5),
-                        tuning = Grid(goal =4),
-                        range = range(model, :epochs, values = [800,1000,1200,2000]),
+                        tuning = Grid(goal =3),
+                        range = range(model, :epochs, values = [800,1000,1200]),
                         measure = MisclassificationRate())
 
 mach = fit!(machine(tuned_model,x_train2, y), verbosity = 1)
@@ -155,35 +160,10 @@ model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
                 epochs = 2000,
                 alpha = 0.25)
 
-t2,tv2,te2,tev2 = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
-mach2 = fit!(machine(model,t2, tv2), verbosity = 1)
-m = mean(predict_mode(mach2, te2) .== tev2)
+mach = fit!(machine(model,x_train2, y), verbosity = 1)
 
 
 
-
-
-
-
-model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
-                σ = relu, dropout =0.5),
-                optimiser = ADAM(),
-                batch_size = 128,
-                alpha =0.25)
-
-tuned_model = TunedModel(model = model,
-                        resampling = CV(nfolds = 2),
-                        tuning = Grid(goal =2),
-                        range = range(model, :epochs, values = [1200,2000]),
-                        measure = MisclassificationRate())
-
-mach = fit!(machine(tuned_model,x_train2, y), verbosity = 1)
-
-report(mach)
-plot(mach)
-fitted_params(mach).best_model
-pred = predict_mode(mach, x_test)
-kaggle_submit(pred, "NN_mean")
 
 
 
