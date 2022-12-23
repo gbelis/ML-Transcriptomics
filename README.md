@@ -18,8 +18,6 @@ The training data consist of normalized counts for 32285 genes in 5000 different
 In this project we tried to find the best feature selection and machine learning techniques to predict the experimental condition.
 Through this work, we hope to gain new insights into the markers of epigenetic modifications in different experimental conditions.
 
-![Hopfiel Network diagram](https://upload.wikimedia.org/wikipedia/commons/b/b4/Hopfield%27s_net.png)
-
 ## :open_book: Requirements and Installation
 
 - This project is available on [GitHub Pages](https://github.com/) with the following link: https://github.com/gbelis/ML_Project.git
