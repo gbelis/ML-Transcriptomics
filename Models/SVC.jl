@@ -1,7 +1,6 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLCourse, Statistics, Distributions,OpenML, MLJMultivariateStatsInterface, MLJLIBSVMInterface
 include("../data_processing.jl")
-include("../data_analysis.jl")
 include("../models.jl")
 
 #Importing Data
@@ -15,7 +14,7 @@ x_train, x_test = clean(train_df, test_df)
 x_train, x_test = no_corr(x_train, x_test)
 x_train_norm, x_test_norm = norm(x_train, x_test)
 
-x_train_sel = correlation_labels(x_train_norm, 1122)
+x_train_sel = correlation_labels(x_train_norm,y, 1122)
 n_1200 = 1122
 n_5000 = 2902
 n_6000 = 3529

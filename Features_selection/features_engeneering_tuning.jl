@@ -1,12 +1,12 @@
+# This file contains all trials of data processing techniques
+
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using DataFrames, Random, CSV, MLJ, MLJLinearModels, MLCourse#, Statistics, Distributions,OpenML, MLJFlux, Flux
 import Pkg; Pkg.add("PlotlyJS")
 using PlotlyJS
-# import Pkg; Pkg.add("GLM")
-# using GLM
 
-include("./data_processing.jl")
-include("./models.jl")
+include("../data_processing.jl")
+include("../models.jl")
 
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
@@ -17,10 +17,9 @@ Random.seed!(0)
 #clean data
 x_train, x_test,y = clean_data(train_df, test_df, from_index=true)
 #normalisation
-#x_train, x_test = norm(x_train, x_test)
+x_train, x_test = norm(x_train, x_test)
 
-x_train = MLJ.transform(fit!(machine(Standardizer(), x_train)), x_train)
-
+#to use less RAM
 train_df = nothing
 test_df = nothing
 x_test = nothing
@@ -32,8 +31,9 @@ The call rate for a given gene is defined as the proportion of measurement
 for which the corresponding gene information is not 0. 
 We try different pourcents of selection and observe the resulting accuracy
 """
+
 # initiate a dataframe to save accuracy values
-results = DataFrame([[],[],[]], ["pourcent","length", "accuracy"])
+results_cr = DataFrame([[],[],[]], ["pourcent","length", "accuracy"])
 n_folds=5
 
 # pourcents to try
@@ -60,18 +60,18 @@ for i in (pourcent)
         mach = machine(MultinomialClassifier(penalty =:none),t2, tv2) |>fit!
         m += mean(predict_mode(mach, te2) .== tev2)
     end
-    push!(results, [i ,l, m/n_folds])
+    push!(results_cr, [i ,l, m/n_folds])
 end
 
-results.pourcent = 100 .- results.pourcent
+results_cr.pourcent = 100 .- results_cr.pourcent
 
-println(results)
+println(results_cr)
 
 #save the results
-CSV.write("./data/results_call_rates.csv",results)
+#CSV.write("./data/results_call_rates.csv",results_cr)
 
 #make a plot of the accuracy depending of the pourcent of call rates chosen
-PlotlyJS.plot(PlotlyJS.scatter(x=results.pourcent, y=results.accuracy, mode="markers", marker=attr(size=8, color=results.length, colorscale="Viridis", showscale=true)),
+PlotlyJS.plot(PlotlyJS.scatter(x=results_cr.pourcent, y=results_cr.accuracy, mode="markers", marker=attr(size=8, color=results_cr.length, colorscale="Viridis", showscale=true)),
 Layout(title="accuracy depending on the call rates chosen",yaxis_title="Test accuracy", xaxis_title="Pourcent of call rates removed", coloraxis_title = "number of predictors"))
 
 ############################## Mean Difference
@@ -85,7 +85,7 @@ We try different number of predictors of and observe the resulting accuracy
 """
 
 # initiate a dataframe to save accuracy values
-results = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
+results_mean = DataFrame([[],[],[]], ["length","predictors_nb", "accuracy"])
 
 results
 
@@ -125,14 +125,14 @@ for i in (nb_pred)
         mach = machine(LogisticClassifier(penalty = :none),x_train2, validation_train) |>fit!
         m += mean(predict_mode(mach, test_data) .== validation_test)
     end
-    push!(results, [i ,l/n_folds, m/n_folds])
+    push!(results_mean, [i ,l/n_folds, m/n_folds])
 end
 
-#save the results
-CSV.write("./data/results_mean3.csv",results)
+#save the results if needed
+#CSV.write("./data/results_mean3.csv",results_mean)
 
 #make a plot of the accuracy depending of the pourcent of call rates chosen
-PlotlyJS.plot(PlotlyJS.scatter(x=results.predictors_nb, y=results.accuracy, mode="markers", marker=attr(size=5, color=results.length, colorscale="Viridis", showscale=true)),
+PlotlyJS.plot(PlotlyJS.scatter(x=results_mean.predictors_nb, y=results_mean.accuracy, mode="markers", marker=attr(size=5, color=results_mean.length, colorscale="Viridis", showscale=true)),
 Layout(title="Predictors selected on the variability between labels",yaxis_title="Test accuracy", xaxis_title="predictors_nb", coloraxis_title = "number of predictors"))
 
 ############################## Mean and Call_rates
@@ -189,8 +189,6 @@ end
 println(results_tot)
 sort!(results_tot, [:length], rev=true)
 
-
-CSV.write("./data/results_tot.csv",results)
 PlotlyJS.plot(PlotlyJS.scatter(x=results.mean, y=results.pourcent, mode="markers", marker=attr(size=5, color=results.accuracy, colorscale="Viridis", showscale=true)),
 Layout(title="accuracy depending on the variability between labels",yaxis_title="Test accuracy", xaxis_title="difference between the means of labels", coloraxis_title = "number of predictors"))
 
@@ -216,7 +214,7 @@ x_train2 = select(x_train, selection.gene)
 # compute the accuracy
 train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
-m += mean(predict_mode(mach, test_data) .== validation_test)
+m = mean(predict_mode(mach, test_data) .== validation_test)
 
 ############################## ftest
 """
@@ -265,21 +263,22 @@ x_train2 = select(x_train, selection.gene)
 # compute the accuracy
 train_data, validation_train, test_data, validation_test = data_split(x_train2,y, 1:4000, 4001:5000, shuffle =true)
 mach = machine(LogisticClassifier(penalty = :none),train_data, validation_train) |>fit!
-m += mean(predict_mode(mach, test_data) .== validation_test)v
+m = mean(predict_mode(mach, test_data) .== validation_test)v
 
-############# Visualization
+####################### Visualization
 
-res_mean = load_data("./data/results_mean")
-res_ttest = load_data("./data/results_ttest")
-res_cr = load_data("./data/results_call_rates.csv")
+#Load file if saved
+# results_mean = load_data("./data/results_mean")
+# results_ttest = load_data("./data/results_ttest")
+# results_cr = load_data("./data/results_call_rates.csv")
 
-p1 = PlotlyJS.plot(PlotlyJS.scatter(x=res_cr.predictors_nb, y=res_cr.accuracy, mode="markers", marker=attr(size=5, color=res_cr.predictors_nb, colorscale="Viridis", showscale=true)),
+p1 = PlotlyJS.plot(PlotlyJS.scatter(x=results_cr.predictors_nb, y=results_cr.accuracy, mode="markers", marker=attr(size=5, color=results_cr.predictors_nb, colorscale="Viridis", showscale=true)),
 Layout(title="1- Accuracy depending on the call rates chosen",yaxis_title="Test accuracy"))
 
-p2 = PlotlyJS.plot(PlotlyJS.scatter(x=res_mean.predictors_nb, y=res_mean.accuracy, mode="markers", marker=attr(size=5, color=res_mean.predictors_nb, colorscale="Viridis", showscale=true)),
+p2 = PlotlyJS.plot(PlotlyJS.scatter(x=results_mean.predictors_nb, y=results_mean.accuracy, mode="markers", marker=attr(size=5, color=results_mean.predictors_nb, colorscale="Viridis", showscale=true)),
 Layout(title="2- Predictors selected on the mean variation between labels",yaxis_title="Test accuracy"))
 
-p3 = PlotlyJS.plot(PlotlyJS.scatter(x=res_ttest.predictors_nb, y=res_ttest.accuracy, mode="markers", marker=attr(size=5, color=res_ttest.predictors_nb, colorscale="Viridis", showscale=true)),
+p3 = PlotlyJS.plot(PlotlyJS.scatter(x=results_ttest.predictors_nb, y=results_ttest.accuracy, mode="markers", marker=attr(size=5, color=results_ttest.predictors_nb, colorscale="Viridis", showscale=true)),
 Layout(title="3- T-test Predictors selection ",yaxis_title="Test accuracy", xaxis_title="number of predictors", font=attr(size=10)))
 
 p = [p1; p2; p3]

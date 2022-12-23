@@ -1,8 +1,7 @@
 using Pkg; Pkg.activate(joinpath(Pkg.devdir(), "MLCourse"))
 using Plots, DataFrames, Random, CSV, MLJ, MLCourse, Statistics, Distributions, OpenML, MLJMultivariateStatsInterface, MLJFlux, Flux, MLJLinearModels
-include("./data_processing.jl")
-include("./data_analysis.jl")
-include("./models.jl")
+include("../data_processing.jl")
+include("../models.jl")
 Random.seed!(0)
 
 #Importing Data
