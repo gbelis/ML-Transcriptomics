@@ -58,14 +58,13 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
      - |-- XGB.jl............................................................................................................................................3.10
      
 - |-- Plots ......................................................................................................................................................4
-     - |-- Features_selection_plot.html..........................................................................................................4.1
-     - |-- clustermap.png..............................................................................................................................4.2
-     - |-- corr_plot_norm.png........................................................................................................................4.3
+     - |-- clustermap.png..............................................................................................................................4.1
+     - |-- corr_plot_norm.png........................................................................................................................4.2
+     - |-- Features_selection_plot.png..........................................................................................................4.3
      - |-- histogram.html................................................................................................................................4.4
-     - |-- pca_plot.html..................................................................................................................................4.5
-     - |-- pred_plot_Mid1_Hexb_Gm42418.html ...........................................................................................4.6
-     - |-- pred_plot_Mid1_Hexb_Gm42418_LOG.html..................................................................................4.7
-     - |-- variance_plot.png...........................................................................................................................4.8
+     - |-- pred_plot_Mid1_Hexb_Gm42418.html and png......................................................................................4.5
+     - |-- pred_plot_Mid1_Hexb_Gm42418_LOG.html and png.............................................................................4.6
+     - |-- variance_plot.png...........................................................................................................................4.7
 
 - |-- Submission............................................................................................................................................5
      - |-- 
@@ -126,33 +125,33 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 4. Intersting Plots useful for data interpretation, data analysis and features selection.
 
-    4.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
-
-    ![features](https://user-images.githubusercontent.com/92453354/209339267-4c4d14b3-060d-49a3-96fa-8863b1c268cd.png)
-
-    4.2. Heatmap of the 13 most important genes.
+     4.1. Heatmap of the 13 most important genes.
    
     ![clustermap](https://user-images.githubusercontent.com/92453354/209339284-b00ac23d-aa62-4537-801c-4c6c038fbfdc.png)
 
-    4.3. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+     4.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
    
-    ![corr_plot_norm](https://user-images.githubusercontent.com/92453354/209339326-966fc15b-44e0-4af7-b798-ea211990f9da.png)
+     ![corr_plot_norm](https://user-images.githubusercontent.com/92453354/209339326-966fc15b-44e0-4af7-b798-ea211990f9da.png)
 
-    4.4. Histogramm showing the distributions of the experimental conditions in the training data.
-    
-    ![Histogram](https://user-images.githubusercontent.com/92453354/209339606-eecf75d2-13c0-4b3f-afce-ababb2add1aa.png)
+     4.3. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
-    4.5. Spatial representation of Mid1, Hexb and Gm42418 genes.
-  
-    ![pred_plot_Mid1_Hexb_Gm42418](https://user-images.githubusercontent.com/92453354/209340284-783e260b-2990-48bf-9b19-2fba2bffdeb1.png)
+     ![features](https://user-images.githubusercontent.com/92453354/209339267-4c4d14b3-060d-49a3-96fa-8863b1c268cd.png)
 
-    4.6. Spatial representation of Mid1, Hexb and Gm42418 genes with a previous logarithmic application.
-    
-    ![pred_plot_Mid1_Hexb_Gm42418_LOG](https://user-images.githubusercontent.com/92453354/209340295-43221ba3-ced3-4a42-8abb-073f17a52ec7.png)
+     4.4. Histogramm showing the distributions of the experimental conditions in the training data.
 
-    4.7. PCA explained variance plot
-    
-    ![variance_plot](https://user-images.githubusercontent.com/92453354/209339447-7af3d03b-a139-4c89-9a98-e3b635bb8952.png)
+     ![Histogram](https://user-images.githubusercontent.com/92453354/209339606-eecf75d2-13c0-4b3f-afce-ababb2add1aa.png)
+
+     4.5. Spatial representation of Mid1, Hexb and Gm42418 genes.
+
+     ![pred_plot_Mid1_Hexb_Gm42418](https://user-images.githubusercontent.com/92453354/209340284-783e260b-2990-48bf-9b19-2fba2bffdeb1.png)
+
+     4.6. Spatial representation of Mid1, Hexb and Gm42418 genes with a previous logarithmic application.
+
+     ![pred_plot_Mid1_Hexb_Gm42418_LOG](https://user-images.githubusercontent.com/92453354/209340295-43221ba3-ced3-4a42-8abb-073f17a52ec7.png)
+
+     4.7. PCA explained variance plot
+
+     ![variance_plot](https://user-images.githubusercontent.com/92453354/209339447-7af3d03b-a139-4c89-9a98-e3b635bb8952.png)
 
 
 
