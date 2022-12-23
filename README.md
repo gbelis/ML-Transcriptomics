@@ -146,7 +146,7 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
    
     ![PCA_plot](https://user-images.githubusercontent.com/92453354/209346393-9f74afb5-3b76-4e69-8e18-57e96dc98706.png)
 
-     4.6. PCA plot with a previous logarithmic application.
+     4.6. PCA plot with using the logarithm of the data.
      
     ![PCA_plot_log](https://user-images.githubusercontent.com/92453354/209346410-4cf7d86a-c4c4-4cb9-b67b-159b7ef76dd6.png)
 
