@@ -33,12 +33,8 @@ seed, goal, lower, upper = 0,8, 1e-8, 1e-2
 Random.seed!(seed)
 model = LogisticClassifier(penalty = :l1)
 
-lower = 8.5e-5
-upper = 8.5e-4
-goal = 2
-
 mach_lasso = machine(TunedModel(model = model,
-                                resampling = CV(nfolds = 2),
+                                resampling = CV(nfolds = 5),
                                 tuning = Grid(goal = goal),
                                 range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
                                 measure = MisclassificationRate()),

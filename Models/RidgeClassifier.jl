@@ -19,7 +19,6 @@ Hyperparameter : lambda, search between 1e-2 and 1e-6
 
 """
 
-
 #Importing Data
 train_df = load_data("./data/train.csv.gz")
 test_df = load_data("./data/test.csv.gz")
