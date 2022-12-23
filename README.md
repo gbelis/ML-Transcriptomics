@@ -59,10 +59,13 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
      
 - |-- Plots ......................................................................................................................................................4
      - |-- Features_selection_plot.html..........................................................................................................4.1
-     - |-- corr_plot_norm.png........................................................................................................................4.2
-     - |-- histogram.html................................................................................................................................4.3
-     - |-- pca_plot.html..................................................................................................................................4.4
-     - |-- variance_plot.png...........................................................................................................................4.5
+     - |-- clustermap.png..........................................................................................................4.2
+     - |-- corr_plot_norm.png........................................................................................................................4.3
+     - |-- histogram.html................................................................................................................................4.4
+     - |-- pca_plot.html..................................................................................................................................4.5
+     - |-- pred_plot_Mid1_Hexb_Gm42418.html .....................................................................................................................4.6
+     - |-- pred_plot_Mid1_Hexb_Gm42418_LOG.html.............................................................................................................4.7
+     - |-- variance_plot.png...........................................................................................................................4.8
 
 - |-- Submission............................................................................................................................................5
      - |-- 
@@ -75,9 +78,10 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 - |-- Google_Colab.ipynb .............................................................................................................................7
 - |-- README.md ....................................................................................................................................8
 - |-- Visualisations.jl..................................................................................................................................9
-- |-- cross_val.jl.........................................................................................................................................10
-- |-- data_processing.jl..............................................................................................................................11
-- |-- models.jl...........................................................................................................................................12
+- |-- clustermap.ipynb.........................................................................................................................................10
+- |-- cross_val.jl.........................................................................................................................................11
+- |-- data_processing.jl..............................................................................................................................12
+- |-- models.jl...........................................................................................................................................13
 
 .....
 **Contents :**
@@ -123,11 +127,19 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
     4.1. Plot of the accuracy variation with different features selection techniques ( call-rates, mean variation and t-test).
 
-    4.2. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+    
 
-    4.3. Histogramme showing the distributions of the experimental conditions in the training data.
+    4.2. Heatmap of the 13 most important genes.
 
-    4.4. Spatial representation of the labels repartition using the estimated 3 more important genes.
+    4.3. Correlation plot between the four more important genes, according to a t-test. With a previous standardisation of the data.
+
+    4.4. Histogramm showing the distributions of the experimental conditions in the training data.
+
+    4.5. Spatial representation of the labels repartition using the estimated 3 more important genes.
+
+    4.6. Spatial representation of Mid1, Hexb and Gm42418 genes.
+
+    4.7. Spatial representation of Mid1, Hexb and Gm42418 genes with a previous logarithmic application.
 
     4.5. PCA explained variance plot
 
@@ -142,9 +154,11 @@ Through this work, we hope to gain new insights into the markers of epigenetic m
 
 9. Code for all figures.
 
-10. Template for feature selection tuning with a certain model.
+10. Python for clustermap.
 
-11. Functions used for data processing and features engeneering.
+11. Template for feature selection tuning with a certain model.
 
-12. Functions for evaluation and cross validation of machine learning techniques.
+12. Functions used for data processing and features engeneering.
+
+13. Functions for evaluation and cross validation of machine learning techniques.
 
