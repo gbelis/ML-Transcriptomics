@@ -1,6 +1,6 @@
 # ML_Project
 
-## *epigenetics and memory :computer:- Miniproject BIO-322*
+## *Epigenetic plasticity as a signature for memory allocation -:computer: Miniproject BIO-322*
 
 ## Aim
 

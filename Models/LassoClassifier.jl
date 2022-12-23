@@ -25,7 +25,39 @@ upper {float} -- value of the biggest lambda to try
 Hyperparameter : lambda, search between 1e-2 and 1e-7 
 """
 
-seed, goal, lower, upper = 0,5, 6e-5,8e-4
+seed, goal, lower, upper = 0,8, 1e-8, 1e-2
+
+Random.seed!(seed)
+model = LogisticClassifier(penalty = :l1)
+mach_lasso = machine(TunedModel(model = model,
+                                resampling = CV(nfolds = 5),
+                                tuning = Grid(goal = goal),
+                                range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
+                                measure = MisclassificationRate()),
+                                x_train, y) |>fit!
+fitted_params(mach_lasso).best_model
+report(mach_lasso)
+pred = predict_mode(mach_lasso, x_test)
+kaggle_submit(pred, "LassoClassifier_")
+
+# We search precisely the best lambda
+seed, goal, lower, upper = 0,10, 1e-5, 1e-3
+
+Random.seed!(seed)
+model = LogisticClassifier(penalty = :l1)
+mach_lasso = machine(TunedModel(model = model,
+                                resampling = CV(nfolds = 5),
+                                tuning = Grid(goal = goal),
+                                range = range(model, :lambda, lower = lower, upper = upper, scale = :log10),
+                                measure = MisclassificationRate()),
+                                x_train, y) |>fit!
+fitted_params(mach_lasso).best_model
+report(mach_lasso)
+pred = predict_mode(mach_lasso, x_test)
+kaggle_submit(pred, "LassoClassifier_12")
+
+# And more precisely
+seed, goal, lower, upper = 0,9, 6e-5, 1e-4
 
 Random.seed!(seed)
 model = LogisticClassifier(penalty = :l1)
@@ -40,12 +72,9 @@ report(mach_lasso)
 pred = predict_mode(mach_lasso, x_test)
 kaggle_submit(pred, "LassoClassifier_12")
 
-t2,tv2,te2,tev2 = data_split(x_train,y, 1:4000, 4001:5000, shuffle =true)
-mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7e-5),t2, tv2) |>fit!
-m = mean(predict_mode(mach, te2) .== tev2)
 
 ###################################################### Best Model
 
-mach = machine(MultinomialClassifier(penalty = :l1, lambda = 7.83e-5), x_train, y) |> fit!
+mach = machine(MultinomialClassifier(penalty = :l1, lambda = 8.5e-5), x_train, y) |> fit!
 pred = predict_mode(mach, x_test)
 kaggle_submit(pred, "LassoClassifier_best_lambda")

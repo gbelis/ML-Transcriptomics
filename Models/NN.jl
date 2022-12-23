@@ -165,8 +165,6 @@ m = mean(predict_mode(mach2, te2) .== tev2)
 
 
 
-
-
 model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
                 σ = relu, dropout =0.5),
                 optimiser = ADAM(),
@@ -174,7 +172,7 @@ model = NeuralNetworkClassifier( builder = MLJFlux.Short(n_hidden = 128,
                 alpha =0.25)
 
 tuned_model = TunedModel(model = model,
-                        resampling = CV(nfolds = 5),
+                        resampling = CV(nfolds = 2),
                         tuning = Grid(goal =2),
                         range = range(model, :epochs, values = [1200,2000]),
                         measure = MisclassificationRate())
@@ -197,7 +195,7 @@ model2 = NeuralNetworkClassifier(builder = MLJFlux.@builder(Chain(Dense(3000, 12
     alpha =0.25)
 
 tuned_model2 = TunedModel(model = model2,
-    resampling = CV(nfolds = 5),
+    resampling = CV(nfolds = 2),
     tuning = Grid(goal =2),
     range = range(model, :epochs, values = [1200,2000]),
     measure = MisclassificationRate())
