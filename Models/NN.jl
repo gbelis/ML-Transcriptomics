@@ -41,8 +41,12 @@ selection3 = results_mean[1:6000,:]
 
 x_train2 = select(x_train, unique([selection1.gene; selection2.gene; selection3.gene]))
 
+data = vcat(x_train2,x_test)
 # Do a PCA to reduce the features to 3000
-x_train2 = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), x_train2)), x_train2)
+data = MLJ.transform(fit!(machine(PCA(maxoutdim = 3000), data)), data)
+
+x_train2= data[1:5000,:]
+x_test = data[5000:8093,:]
 
 #fix seed
 Random.seed!(0)
