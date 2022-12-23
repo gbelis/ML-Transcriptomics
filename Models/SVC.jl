@@ -23,20 +23,21 @@ n_6000 = 3529
 
 x_test_sel = select(x_test, names(x_train_sel))
 
-
 Random.seed!(0)
-svc = SVC(gamma = 2e-4)
+svc = SVC()
 mach = machine(TunedModel(model = svc,
-                        resampling = CV(nfolds = 3),
+                        resampling = CV(nfolds = 5),
                         measure = MisclassificationRate(),
-                        tuning = Grid(goal = 9),
-                        range = range(svc, :cost, lower = 100, upper = 1e4, scale = :log10)),
-                x_train_sel, y) |> fit!
+                        tuning = Grid(goal = 10),
+                        range = [range(svc, :cost, lower = 100, upper = 1000, scale = :log10),
+                                    range(svc, :gamma, lower = 1e-6, upper = 0.01, scale = :log10)]),
+                x_train_norm, y) |> fit!
 
 pred = predict(mach, x_test_norm)
-kaggle_submit(pred, "SCV_Norm_3021preds_3_11_v2") 
+kaggle_submit(pred, "Submission_Title") 
 rep = report(mach)
 plot(mach)
-pred = predict(mach, x_train_sel)
-mean(pred .== y)
+pred = predict(mach, x_train_norm)
+mean(pred.== y)
 rep.best_model
+
